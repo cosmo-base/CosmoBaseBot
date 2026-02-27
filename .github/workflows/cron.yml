@@ -1,0 +1,14 @@
+name: CosmoBase Auto Cron
+
+on:
+  schedule:
+    # 5分ごとに自動実行する設定（GitHubの無料枠の仕様上、最短5分間隔になります）
+    - cron: '*/5 * * * *'
+  workflow_dispatch: # 手動でテスト実行できるようにするボタン
+
+jobs:
+  run-cron:
+    runs-on: ubuntu-latest
+    steps:
+      - name: APIの引き金を引く
+        run: curl -X GET "https://cosmo-base-bot.vercel.app/api/cron"
