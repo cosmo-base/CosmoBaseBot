@@ -49,7 +49,7 @@ export default function CreatePost() {
           discordChannelId,
           discordContent,
           xContent: null,
-          postAt,
+          postAt: new Date(postAt).toISOString(),
           
           // 🌟追加：APIに定期投稿の設定も送る
           isRecurring: isRecurring,
