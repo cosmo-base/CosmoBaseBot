@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 時間指定投稿テーブル
+model ScheduledPost {
+  id                 String   @id @default(uuid())
+  post_to_discord    Boolean  @default(false)
+  post_to_x          Boolean  @default(false)
+  discord_content    String?  // 空欄OK
+  discord_channel_id String?  // 空欄OK
+  x_content          String?  // 空欄OK
+  post_at            DateTime // 投稿日時
+  image_file_ids     Json?    // 画像IDの配列（空欄OK）
+  x_poll_options     Json?    // アンケート選択肢（空欄OK）
+  x_poll_duration    Int?     // アンケート受付時間（空欄OK）
+  status             String   @default("PENDING") // PENDING, POSTED, FAILED
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  is_recurring       Boolean  @default(false) // 定期投稿かどうか
+  recurrence_pattern String?  // 繰り返しの種類（"DAILY", "WEEKLY", "MONTHLY" など）
+}
+
+// 定期投稿テーブル
+model RecurringPost {
+  id                 String   @id @default(uuid())
+  post_to_discord    Boolean  @default(false)
+  post_to_x          Boolean  @default(false)
+  discord_content    String?  // 空欄OK
+  discord_channel_id String?  // 空欄OK
+  x_content          String?  // 空欄OK
+  cron_schedule      String   // Cron式 (例: 0 9 * * 1)
+  image_file_ids     Json?    // 画像IDの配列（空欄OK）
+  is_active          Boolean  @default(true) // 稼働中かどうか
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
