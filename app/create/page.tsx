@@ -9,7 +9,7 @@ export default function CreatePost() {
   const [postAt, setPostAt] = useState("");
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   
-  // 🌟追加：定期投稿用のState（状態管理）
+  // 定期投稿用のState（状態管理）
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrencePattern, setRecurrencePattern] = useState("WEEKLY"); // デフォルトは「毎週」
 
@@ -51,7 +51,7 @@ export default function CreatePost() {
           xContent: null,
           postAt: new Date(postAt).toISOString(),
           
-          // 🌟追加：APIに定期投稿の設定も送る
+          // APIに定期投稿の設定も送る
           isRecurring: isRecurring,
           recurrencePattern: isRecurring ? recurrencePattern : null,
           
@@ -178,7 +178,7 @@ export default function CreatePost() {
             />
           </section>
 
-          {/* 🌟追加：ここが定期投稿の設定エリアです！ */}
+          {/* ここが定期投稿の設定エリアです！ */}
           <section>
             <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
               <span className="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center text-sm">4</span>

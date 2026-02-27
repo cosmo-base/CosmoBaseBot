@@ -1,20 +1,19 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// 🌟これを超追加！「毎回絶対に最新のデータを確認する（サボり防止）」の魔法
+// 「毎回絶対に最新のデータを確認する（サボり防止）」の魔法
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const nowJST = new Date(Date.now() + (9 * 60 * 60 * 1000));
-    console.log("🤖 Cron起動！日本判定時刻:", nowJST.toLocaleString("ja-JP"));
+const now = new Date();
+    console.log("🤖 Cron起動!現在時刻(UTC):", now.toISOString());
 
+    // 純粋な現在時刻で比較
     const pendingPosts = await prisma.scheduledPost.findMany({
       where: {
         status: "PENDING",
-        post_at: {
-          lte: nowJST, // 🌟日本時間基準で比較する
-        },
+        post_at: { lte: now },
       },
     });
 
