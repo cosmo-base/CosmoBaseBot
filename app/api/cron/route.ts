@@ -6,13 +6,15 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const now = new Date();
-    console.log("🤖 Cron起動！現在時刻(UTC):", now.toISOString()); // 🌟ログ用
+    const nowJST = new Date(Date.now() + (9 * 60 * 60 * 1000));
+    console.log("🤖 Cron起動！日本判定時刻:", nowJST.toLocaleString("ja-JP"));
 
     const pendingPosts = await prisma.scheduledPost.findMany({
       where: {
         status: "PENDING",
-        post_at: { lte: now },
+        post_at: {
+          lte: nowJST, // 🌟日本時間基準で比較する
+        },
       },
     });
 
