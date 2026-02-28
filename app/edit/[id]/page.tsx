@@ -192,7 +192,8 @@ export default function EditPost() {
                 <select
                   value={discordChannelId}
                   onChange={(e) => setDiscordChannelId(e.target.value)}
-                  className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-medium text-slate-700"
+                  // 🌟 文字を濃く太くしました
+                  className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-slate-800 font-bold"
                 >
                   <option value="">チャンネルを選択してください</option>
                   {DISCORD_CHANNELS.map((channel) => (
@@ -208,7 +209,8 @@ export default function EditPost() {
                     const selected = templates.find(t => t.id === e.target.value);
                     if (selected) setDiscordContent(selected.content);
                   }}
-                  className="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none cursor-pointer bg-slate-50"
+                  // 🌟 文字を濃く太くしました
+                  className="w-full p-2 border border-slate-300 rounded-lg outline-none cursor-pointer bg-slate-50 text-slate-800 font-bold text-sm"
                 >
                   <option value="">{templates.length === 0 ? "保存されたテンプレートはありません" : "テンプレートを選択..."}</option>
                   {templates.map(t => (
@@ -221,7 +223,11 @@ export default function EditPost() {
                 <label className="block text-indigo-900 font-bold mb-2 text-sm">📣 メンションを挿入</label>
                 <div className="flex flex-wrap gap-2">
                   {DISCORD_ROLES.map((role) => (
-                    <button key={role.id} onClick={() => insertMention(role.id)} className="px-3 py-1.5 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 text-xs font-bold rounded-lg transition-colors border border-indigo-200">
+                    <button
+                      key={role.id}
+                      onClick={() => insertMention(role.id)}
+                      className="px-3 py-1.5 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 text-xs font-bold rounded-lg transition-colors border border-indigo-200"
+                    >
                       {role.name}
                     </button>
                   ))}
@@ -232,7 +238,7 @@ export default function EditPost() {
                 <label className="block text-indigo-900 font-bold mb-2 text-sm">メッセージ内容</label>
                 <textarea
                   rows={8}
-                  className="w-full p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-slate-800 bg-white placeholder-slate-500 font-medium"
+                  className="w-full p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none bg-white font-medium text-slate-800 placeholder-slate-500"
                   value={discordContent}
                   onChange={(e) => setDiscordContent(e.target.value)}
                   placeholder="ここにメッセージを入力します。&#13;&#10;**太字**、__下線__、~~取消線~~、||ネタバレ||、[リンク](URL)、> 引用、```コード``` などが使えます！"
@@ -247,9 +253,14 @@ export default function EditPost() {
                         placeholder="テンプレート名 (例: 定例会用)"
                         value={newTemplateName}
                         onChange={(e) => setNewTemplateName(e.target.value)}
-                        className="flex-1 p-2 text-sm border border-slate-300 rounded bg-white outline-none focus:border-indigo-500"
+                        // 🌟 文字とプレースホルダーを濃く太くしました
+                        className="flex-1 p-2 text-sm border border-slate-300 rounded bg-white outline-none focus:border-indigo-500 text-slate-800 font-bold placeholder-slate-500"
                       />
-                      <button onClick={handleSaveTemplate} disabled={isSavingTemplate} className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded text-sm font-bold transition-colors whitespace-nowrap">
+                      <button
+                        onClick={handleSaveTemplate}
+                        disabled={isSavingTemplate}
+                        className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded text-sm font-bold transition-colors whitespace-nowrap"
+                      >
                         {isSavingTemplate ? "保存中..." : "保存する"}
                       </button>
                     </div>
