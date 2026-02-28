@@ -6,7 +6,6 @@ export async function POST(request: Request) {
     const data = await request.json();
     const newPost = await prisma.scheduledPost.create({
       data: {
-        // XとDiscordの連携用フラグ（既存のコードを維持）
         post_to_discord: data.postToDiscord !== undefined ? data.postToDiscord : true,
         post_to_x: data.postToX || false,
         discord_channel_id: data.discordChannelId || "",
@@ -14,13 +13,10 @@ export async function POST(request: Request) {
         x_content: data.xContent || "",
         post_at: new Date(data.postAt),
 
-        // 🌟 修正：データベースの設計図（schema.prisma）の名前に合わせました
-        isRecurring: data.isRecurring || false,
-        recurrencePattern: data.recurrencePattern || null,
+        is_recurring: data.isRecurring || false,
+        recurrence_pattern: data.recurrencePattern || null,
 
-        // 🌟 追加：下書きフラグを保存！
         isDraft: data.isDraft || false,
-
         image_file_ids: data.imageFileIds,
         status: "PENDING",
       },

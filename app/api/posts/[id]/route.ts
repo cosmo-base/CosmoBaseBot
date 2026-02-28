@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// ① 編集画面を開いた時に、既存のデータを読み込む処理
 export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
   try {
     const params = await props.params;
@@ -18,7 +17,6 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
   }
 }
 
-// ② 編集画面で「更新する」を押した時に、データを上書き保存する処理
 export async function PUT(request: Request, props: { params: Promise<{ id: string }> }) {
   try {
     const params = await props.params;
@@ -30,14 +28,14 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
       data: {
         discord_channel_id: data.discordChannelId,
         discord_content: data.discordContent,
+        x_content: data.xContent || "",
         post_at: new Date(data.postAt),
-        
-        // 🌟 追加：編集時にも下書きフラグや定期投稿の設定を更新
-        isDraft: data.isDraft !== undefined ? data.isDraft : false,
-        isRecurring: data.isRecurring !== undefined ? data.isRecurring : false,
-        recurrencePattern: data.recurrencePattern || null,
 
-        // 画像が新しく選ばれた場合のみ、画像データも上書きする
+        isDraft: data.isDraft !== undefined ? data.isDraft : false,
+
+        is_recurring: data.isRecurring !== undefined ? data.isRecurring : false,
+        recurrence_pattern: data.recurrencePattern || null,
+
         ...(data.imageFileIds !== undefined && { image_file_ids: data.imageFileIds }),
       },
     });
