@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚀 CosmoBase PR Automator (自動広報システム)
 
-## Getting Started
+CosmoBaseおよびFSIFの広報活動を効率化・自動化するために開発された、Discord向けの自動投稿予約システムです。
+指定した日時に自動でメッセージや画像をDiscordチャンネルへ送信します。
 
-First, run the development server:
+## ✨ 主な機能 (Features)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **🔐 セキュアなログイン:** Discordアカウントを用いたOAuth2ログイン（NextAuth）
+- **📅 予約投稿:** 指定した日時（30分刻み）でのDiscordへの自動メッセージ・画像送信
+- **🔁 定期投稿:** 毎日・毎週・毎月といったルーティン投稿の自動生成
+- **🧹 自動クリーンアップ:** 単発の投稿は、送信完了後にデータベースから自動削除され、容量を節約します
+- **🤖 完全自動化 (Cron):** GitHub Actionsを利用し、毎時00分・30分に自動で送信処理を実行
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ 技術スタック (Tech Stack)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Frontend / Backend:** Next.js (App Router)
+- **Database:** PostgreSQL (Neon / Supabase)
+- **ORM:** Prisma
+- **Authentication:** NextAuth.js (Auth.js)
+- **Deployment:** Vercel
+- **Automation (Cron):** GitHub Actions
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## ⚙️ 環境変数 (Environment Variables)
 
-## Learn More
+ローカル環境での開発や、Vercelへのデプロイ時には以下の環境変数（`.env`）が必要です。
 
-To learn more about Next.js, take a look at the following resources:
+```env
+# Database
+DATABASE_URL="postgresql://ユーザー名:パスワード@ホスト名/データベース名"
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Discord Bot
+DISCORD_BOT_TOKEN="あなたのDiscord Botトークン"
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# NextAuth (Discord OAuth2)
+DISCORD_CLIENT_ID="OAuth2のクライアントID"
+DISCORD_CLIENT_SECRET="OAuth2のクライアントシークレット"
+NEXTAUTH_SECRET="ランダムな文字列（openssl rand -base64 32 などで生成）"
+NEXTAUTH_URL="http://localhost:3000" # 本番環境ではVercelのURL

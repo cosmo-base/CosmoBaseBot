@@ -187,19 +187,19 @@ export default function CreatePost() {
                 className="border p-2 rounded w-full text-black"
               />
 
-              {/* 時間（00〜23）の選択 */}
+              {/* 時間（7〜22）の選択 */}
               <select
-                value={postAt ? postAt.split("T")[1]?.split(":")[0] : "00"}
+                value={postAt ? postAt.split("T")[1]?.split(":")[0] : "07"}
                 onChange={(e) => {
-                  // もし日付が未入力なら、今日の日付を自動セットする親切設計
                   const datePart = postAt ? postAt.split("T")[0] : new Date().toISOString().split("T")[0];
                   const minutePart = postAt ? postAt.split("T")[1]?.split(":")[1] : "00";
                   setPostAt(`${datePart}T${e.target.value}:${minutePart}`);
                 }}
                 className="border p-2 rounded text-black"
               >
-                {Array.from({ length: 24 }).map((_, i) => {
-                  const h = i.toString().padStart(2, "0");
+                {Array.from({ length: 16 }).map((_, i) => {
+                  // 🌟 iは0〜15なので、+7して「7〜22」にする
+                  const h = (i + 7).toString().padStart(2, "0");
                   return <option key={h} value={h}>{h}時</option>;
                 })}
               </select>

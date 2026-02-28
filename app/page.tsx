@@ -1,7 +1,8 @@
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import DeleteButton from "@/components/DeleteButton"; // 🌟追加：さっき作った部品を読み込む
+import DeleteButton from "@/components/DeleteButton";
+import { DISCORD_CHANNELS } from "@/lib/discord-channels";
 
 export default async function Dashboard() {
   const session = await getServerSession();
@@ -82,9 +83,11 @@ export default async function Dashboard() {
           <div className="space-y-4">
             {scheduledPosts.map((post) => (
               <div key={post.id} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between hover:border-blue-300 transition-colors">
-                <div className="flex items-center gap-6">
+                
+                {/* 🌟 flex-start でレイアウトを揃えました */}
+                <div className="flex items-start gap-6 w-full">
                   {/* 日時表示 */}
-                  <div className="bg-slate-100 p-4 rounded-xl text-center min-w-[120px]">
+                  <div className="bg-slate-100 p-4 rounded-xl text-center min-w-[120px] shrink-0">
                     <div className="text-sm text-slate-500 font-bold mb-1">
                       {post.post_at.toLocaleDateString("ja-JP", { month: "short", day: "numeric" })}
                     </div>
@@ -93,23 +96,46 @@ export default async function Dashboard() {
                     </div>
                   </div>
 
-                  {/* 内容表示 */}
-                  <div>
-                    <div className="flex gap-2 mb-2">
+                  {/* 🌟 内容表示（チャンネル名と画像） */}
+                  <div className="flex-1">
+                    <div className="flex gap-2 mb-2 items-center">
                       <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">Discord</span>
+                      
+                      {/* IDを名前に変換して表示 */}
+                      {post.discord_channel_id && (
+                        <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded-md flex items-center gap-1">
+                          📢 {DISCORD_CHANNELS.find(c => c.id === post.discord_channel_id)?.name || "不明なチャンネル"}
+                        </span>
+                      )}
                     </div>
+                    
                     <p className="text-slate-700 font-medium line-clamp-2">
                       {post.discord_content}
                     </p>
-                  </div>
-                </div>
 
-                {/* 🌟変更：部品として切り出したボタンを使う */}
-                <div className="flex gap-2">
-                  <a href={`/edit/${post.id}`} className="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-lg transition-colors inline-block">
-                    編集
-                  </a>
-                  <DeleteButton id={post.id} deleteAction={deletePost} />
+                    {/* 画像のサムネイル表示 */}
+                    {post.image_file_ids && Array.isArray(post.image_file_ids) && (post.image_file_ids as string[]).length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {(post.image_file_ids as string[]).map((imgBase64, index) => (
+                          <img 
+                            key={index} 
+                            src={imgBase64} 
+                            alt={`添付画像 ${index + 1}`} 
+                            className="w-16 h-16 object-cover rounded-md border border-slate-200 shadow-sm"
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 右端のボタン類 */}
+                  <div className="flex gap-2 shrink-0 self-center">
+                    <a href={`/edit/${post.id}`} className="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-lg transition-colors inline-block">
+                      編集
+                    </a>
+                    <DeleteButton id={post.id} deleteAction={deletePost} />
+                  </div>
+
                 </div>
               </div>
             ))}

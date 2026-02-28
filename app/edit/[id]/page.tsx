@@ -11,9 +11,9 @@ export default function EditPost() {
 
   const [discordChannelId, setDiscordChannelId] = useState("");
   const [discordContent, setDiscordContent] = useState("");
+  // 🌟 ここが消えてしまっていた「時間の記憶箱」です！
   const [postAt, setPostAt] = useState("");
 
-  // 🌟変更：画像を「既に保存されているもの」と「新しく追加するもの」に分けました
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
 
@@ -29,7 +29,6 @@ export default function EditPost() {
           setDiscordChannelId(data.discord_channel_id || "");
           setDiscordContent(data.discord_content || "");
 
-          // 🌟追加：保存済みの画像データ（Base64）があればStateにセットする
           if (data.image_file_ids && Array.isArray(data.image_file_ids)) {
             setExistingImages(data.image_file_ids);
           }
@@ -55,12 +54,10 @@ export default function EditPost() {
     return true;
   };
 
-  // 🌟追加：保存済みの画像をクリックして消す処理
   const handleRemoveExistingImage = (index: number) => {
     setExistingImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  // 🌟追加：新しく選んだ画像をクリックして取り消す処理
   const handleRemoveNewImage = (index: number) => {
     setNewImageFiles(prev => prev.filter((_, i) => i !== index));
   };
@@ -72,7 +69,6 @@ export default function EditPost() {
     try {
       let convertedNewImages: string[] = [];
 
-      // 新しく追加された画像だけをBase64文字列に変換する
       if (newImageFiles.length > 0) {
         const convertToBase64 = (file: File): Promise<string> => {
           return new Promise((resolve, reject) => {
@@ -85,7 +81,6 @@ export default function EditPost() {
         convertedNewImages = await Promise.all(newImageFiles.map(convertToBase64));
       }
 
-      // 🌟変更：「元々あった画像」と「新しく追加した画像」を合体させる！
       const finalImages = [...existingImages, ...convertedNewImages];
 
       const response = await fetch(`/api/posts/${id}`, {
@@ -146,7 +141,6 @@ export default function EditPost() {
                 className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-medium text-slate-700"
               >
                 <option value="">チャンネルを選択してください</option>
-                {/* 🌟変更：別ファイルで管理しているリストから自動で選択肢を作る */}
                 {DISCORD_CHANNELS.map((channel) => (
                   <option key={channel.id} value={channel.id}>
                     {channel.name}
@@ -168,14 +162,12 @@ export default function EditPost() {
 
           <hr className="border-slate-100" />
 
-          {/* 🌟変更：画像のプレビュー・削除・追加ができるように大改修！ */}
           <section>
             <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
               <span className="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span>
               画像の確認と追加
             </h2>
 
-            {/* 画像の追加ボタン */}
             <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:bg-slate-50 transition-colors mb-6">
               <input
                 type="file"
@@ -183,7 +175,6 @@ export default function EditPost() {
                 accept="image/*"
                 onChange={(e) => {
                   if (e.target.files) {
-                    // 新しく選んだ画像を「追加」する（既存のものに結合）
                     setNewImageFiles(prev => [...prev, ...Array.from(e.target.files!)]);
                   }
                 }}
@@ -196,10 +187,7 @@ export default function EditPost() {
               </label>
             </div>
 
-            {/* サムネイル一覧表示エリア */}
             <div className="space-y-4">
-
-              {/* 保存済みの画像 */}
               {existingImages.length > 0 && (
                 <div className="bg-slate-100 p-4 rounded-xl border border-slate-200">
                   <p className="text-sm font-bold text-slate-700 mb-3">💾 現在保存されている画像 (クリックで削除)</p>
@@ -216,14 +204,12 @@ export default function EditPost() {
                 </div>
               )}
 
-              {/* 今回新しく追加する画像 */}
               {newImageFiles.length > 0 && (
                 <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
                   <p className="text-sm font-bold text-blue-800 mb-3">✨ 新しく追加する画像 (クリックで取り消し)</p>
                   <div className="flex flex-wrap gap-4">
                     {newImageFiles.map((file, i) => (
                       <div key={`new-${i}`} onClick={() => handleRemoveNewImage(i)} className="relative group cursor-pointer border-2 border-transparent hover:border-red-400 rounded-lg transition-all">
-                        {/* 選択したファイルをその場でプレビュー表示 */}
                         <img src={URL.createObjectURL(file)} alt="new" className="w-24 h-24 object-cover rounded-md group-hover:opacity-50 transition-opacity bg-white shadow-sm" />
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded shadow-md">取消</span>
@@ -233,23 +219,62 @@ export default function EditPost() {
                   </div>
                 </div>
               )}
-
             </div>
           </section>
 
           <hr className="border-slate-100" />
 
+          {/* 🌟 新しい「3分割カレンダー」に完全置き換え */}
           <section>
             <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
               <span className="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center text-sm">3</span>
               投稿日時を設定 <span className="text-red-500">*</span>
             </h2>
-            <input
-              type="datetime-local"
-              className="w-full max-w-md p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-bold bg-white"
-              value={postAt}
-              onChange={(e) => setPostAt(e.target.value)}
-            />
+            
+            <div className="flex gap-2 max-w-md">
+              <input
+                type="date"
+                value={postAt ? postAt.split("T")[0] : ""}
+                onChange={(e) => {
+                  const newDate = e.target.value;
+                  if (!newDate) {
+                    setPostAt("");
+                    return;
+                  }
+                  const timePart = postAt ? postAt.split("T")[1] : "07:00";
+                  setPostAt(`${newDate}T${timePart}`);
+                }}
+                className="w-full p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-slate-700 bg-white"
+              />
+              
+              <select
+                value={postAt ? postAt.split("T")[1]?.split(":")[0] : "07"}
+                onChange={(e) => {
+                  const datePart = postAt ? postAt.split("T")[0] : new Date().toISOString().split("T")[0];
+                  const minutePart = postAt ? postAt.split("T")[1]?.split(":")[1] : "00";
+                  setPostAt(`${datePart}T${e.target.value}:${minutePart}`);
+                }}
+                className="p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-slate-700 bg-white cursor-pointer"
+              >
+                {Array.from({ length: 16 }).map((_, i) => {
+                  const h = (i + 7).toString().padStart(2, "0");
+                  return <option key={h} value={h}>{h}時</option>;
+                })}
+              </select>
+
+              <select
+                value={postAt ? postAt.split("T")[1]?.split(":")[1] : "00"}
+                onChange={(e) => {
+                  const datePart = postAt ? postAt.split("T")[0] : new Date().toISOString().split("T")[0];
+                  const hourPart = postAt ? postAt.split("T")[1]?.split(":")[0] : "07";
+                  setPostAt(`${datePart}T${hourPart}:${e.target.value}`);
+                }}
+                className="p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-slate-700 bg-white cursor-pointer"
+              >
+                <option value="00">00分</option>
+                <option value="30">30分</option>
+              </select>
+            </div>
           </section>
 
           <div className="pt-6">
