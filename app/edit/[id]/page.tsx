@@ -191,7 +191,7 @@ export default function EditPost() {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <img src="/CB-mark.png" alt="logo" className="w-12 h-12 object-contain rounded-xl shadow-sm bg-white p-1" />
+            <img src="/CB-mark.png" alt="logo" className="w-12 h-12 object-cover rounded-xl shadow-sm bg-white" />
             <div>
               <h1 className="text-3xl font-extrabold text-slate-800">スケジュールの編集</h1>
               <p className="text-slate-500 mt-1 font-medium">登録済みの投稿内容を変更します</p>
@@ -442,7 +442,7 @@ export default function EditPost() {
                   <div className="bg-[#313338] text-gray-100 p-6 rounded-xl shadow-xl border border-[#1e1f22]">
                     <div className="flex gap-4">
                       <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 overflow-hidden">
-                        <img src="/CB-mark.png" alt="bot icon" className="w-full h-full object-contain p-0.5" />
+                        <img src="/CB-mark.png" alt="bot icon" className="w-full h-full object-cover" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-baseline gap-2 mb-1">
@@ -475,7 +475,7 @@ export default function EditPost() {
                   <div className="bg-white text-black p-6 rounded-xl shadow-xl border border-slate-200">
                     <div className="flex gap-4">
                       <div className="w-12 h-12 rounded-full border border-slate-200 shrink-0 overflow-hidden">
-                        <img src="/CB-mark.png" alt="x icon" className="w-full h-full object-contain p-1" />
+                        <img src="/CB-mark.png" alt="x icon" className="w-full h-full object-cover" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-baseline gap-1 mb-1">
