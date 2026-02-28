@@ -58,8 +58,8 @@ export async function GET(request: Request) {
         */
 
         // ③ 送信が成功したあとの処理
-        // 🌟 修正：データベースの正しい名前（is_recurring, recurrence_pattern）に直しました！
-        if (post.is_recurring && post.recurrence_pattern) {
+        // 🌟 修正：条件に「&& post.post_at」を追加して、TypeScriptに「絶対に空っぽじゃないよ」と教えます！
+        if (post.is_recurring && post.recurrence_pattern && post.post_at) {
           const nextDate = new Date(post.post_at);
           
           if (post.recurrence_pattern === "daily") {
