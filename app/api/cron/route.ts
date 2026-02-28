@@ -4,14 +4,13 @@ import { prisma } from "@/lib/prisma";
 export async function GET(request: Request) {
   // ① 「今」の時間から少し前の時間まで、送信すべき投稿を探す
   const now = new Date();
-
+  
   try {
     const postsToSend = await prisma.scheduledPost.findMany({
       where: {
         status: "PENDING",
         post_at: { lte: now }, // 今の時間より過去（または同じ）になっているもの
-        // 🌟 追加：「下書き（Draft）」ではないものだけを厳選する！
-        isDraft: false,
+        isDraft: false, // 下書き（Draft）ではないものだけを厳選する！
       },
     });
 
@@ -22,8 +21,9 @@ export async function GET(request: Request) {
     // ② 見つかった投稿を、順番にDiscordに送信していく
     for (const post of postsToSend) {
       try {
-        let files = [];
-
+        // 🌟 修正：TypeScriptに「この箱(配列)には何でも入るよ」と明記してエラーを消す！
+        let files: any[] = [];
+        
         if (post.image_file_ids && Array.isArray(post.image_file_ids)) {
           files = (post.image_file_ids as string[]).map((base64String, index) => {
             const matches = base64String.match(/^data:(image\/\w+);base64,(.+)$/);
@@ -36,20 +36,18 @@ export async function GET(request: Request) {
         }
 
         const formData = new FormData();
-
-        // 🌟 追加：Discordのメンションが本物の通知として機能するように「allowed_mentions」を設定
-        formData.append("payload_json", JSON.stringify({
+        
+        formData.append("payload_json", JSON.stringify({ 
           content: post.discord_content,
-          allowed_mentions: { parse: ["users", "roles", "everyone"] }
+          allowed_mentions: { parse: ["users", "roles", "everyone"] } 
         }));
 
         files.forEach((file) => {
           if (file) formData.append("files", file);
         });
 
-        // 🌟 追加：本物のDiscordのWebhook URL（FSIF/CosmoBaseの環境に合わせて後で変更してください）
-        // ※今はテスト用のダミーURLを入れていますが、エラーにならないように動かします。
-        const webhookUrl = "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN";
+        // 🌟 本物のDiscordのWebhook URL（FSIF/CosmoBaseの環境に合わせて後で変更）
+        const webhookUrl = "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN"; 
 
         /* 【注意】本番環境では以下の fetch のコメントアウトを外して実際に送信させます
         const response = await fetch(webhookUrl, {
@@ -63,11 +61,9 @@ export async function GET(request: Request) {
         */
 
         // ③ 送信が成功したあとの処理
-
-        // 🌟 追加：定期投稿のチェック（もし定期投稿なら、次回の日時を計算してステータスをPENDINGのまま更新）
         if (post.isRecurring && post.recurrencePattern) {
           const nextDate = new Date(post.post_at);
-
+          
           if (post.recurrencePattern === "daily") {
             nextDate.setDate(nextDate.getDate() + 1); // 1日後
           } else if (post.recurrencePattern === "weekly") {
@@ -78,7 +74,7 @@ export async function GET(request: Request) {
 
           await prisma.scheduledPost.update({
             where: { id: post.id },
-            data: {
+            data: { 
               post_at: nextDate,
               status: "PENDING", // 次回も送信待ちにする
             },
