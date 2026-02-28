@@ -15,7 +15,7 @@ model ScheduledPost {
   discord_content    String?  // 空欄OK
   discord_channel_id String?  // 空欄OK
   x_content          String?  // 空欄OK
-  post_at            DateTime // 投稿日時
+  post_at            DateTime? // 投稿日時
   image_file_ids     Json?    // 画像IDの配列（空欄OK）
   x_poll_options     Json?    // アンケート選択肢（空欄OK）
   x_poll_duration    Int?     // アンケート受付時間（空欄OK）

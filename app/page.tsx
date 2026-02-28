@@ -20,6 +20,8 @@ export default async function Dashboard() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="text-center p-12 bg-white rounded-2xl shadow-xl border border-slate-100">
+          {/* 🌟 ログイン画面のロゴ */}
+          <img src="/CB-mark.png" alt="CosmoBase" className="w-24 h-24 mx-auto mb-6 rounded-2xl shadow-md" />
           <h1 className="text-4xl font-extrabold mb-3 text-slate-800 tracking-tight">CosmoBase Hub</h1>
           <p className="text-slate-500 mb-10 font-medium">FSIF 広報・SNS自動投稿システム</p>
           <a href="/api/auth/signin" className="inline-block bg-[#5865F2] text-white font-bold px-8 py-4 rounded-xl hover:bg-[#4752C4] transition-colors shadow-md">
@@ -30,21 +32,25 @@ export default async function Dashboard() {
     );
   }
 
+  // 下書きも含めて取得
   const scheduledPosts = await prisma.scheduledPost.findMany({
     where: { status: "PENDING" },
-    orderBy: { post_at: "asc" },
+    orderBy: { createdAt: "desc" }, // 🌟 作成順に並び替え（日時未定があるため）
   });
 
   return (
     <div className="flex min-h-screen bg-slate-50">
-
       {/* サイドバー */}
       <div className="w-72 bg-slate-900 text-white flex flex-col shadow-2xl z-10">
-        <div className="p-8">
-          <h2 className="text-2xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
-            CosmoBase
-          </h2>
-          <p className="text-slate-400 text-xs mt-2 font-semibold tracking-widest uppercase">Bot Management</p>
+        <div className="p-8 flex items-center gap-3">
+          {/* 🌟 サイドバーのロゴ */}
+          <img src="/CB-mark.png" alt="logo" className="w-10 h-10 rounded-xl shadow-sm bg-white p-0.5" />
+          <div>
+            <h2 className="text-xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
+              CosmoBase
+            </h2>
+            <p className="text-slate-400 text-[10px] mt-1 font-semibold tracking-widest uppercase">Bot Management</p>
+          </div>
         </div>
         <nav className="flex-1 px-4 space-y-2 mt-4">
           <a href="/" className="block p-4 bg-slate-800/80 text-blue-400 rounded-xl font-bold border border-slate-700/50">📊 ダッシュボード</a>
@@ -64,9 +70,8 @@ export default async function Dashboard() {
       {/* メインコンテンツ */}
       <div className="flex-1 p-12 overflow-y-auto">
         <div className="mb-10 border-b border-slate-200 pb-6 flex justify-between items-end">
-          <div>
+          <div className="flex items-center gap-4">
             <h1 className="text-3xl font-extrabold text-slate-800">ダッシュボード</h1>
-            <p className="text-slate-500 mt-2 font-medium">今後の投稿スケジュール一覧</p>
           </div>
           <a href="/create" className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-md inline-block">
             ＋ 新しい投稿を作成
@@ -83,53 +88,56 @@ export default async function Dashboard() {
           <div className="space-y-4">
             {scheduledPosts.map((post) => (
               <div key={post.id} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between hover:border-blue-300 transition-colors">
-
                 <div className="flex items-start gap-6 w-full">
-                  {/* 日時表示 */}
-                  <div className="bg-slate-100 p-4 rounded-xl text-center min-w-[120px] shrink-0">
-                    <div className="text-sm text-slate-500 font-bold mb-1">
-                      {post.post_at.toLocaleDateString("ja-JP", {
-                        timeZone: "Asia/Tokyo", // 🌟 日本時間に強制！
-                        month: "short",
-                        day: "numeric"
-                      })}
-                    </div>
-                    <div className="text-xl font-extrabold text-slate-800">
-                      {post.post_at.toLocaleTimeString("ja-JP", {
-                        timeZone: "Asia/Tokyo", // 🌟 日本時間に強制！
-                        hour: "2-digit",
-                        minute: "2-digit"
-                      })}
-                    </div>
+                  
+                  {/* 日時表示＆下書きバッジ */}
+                  <div className="bg-slate-100 p-4 rounded-xl text-center min-w-[120px] shrink-0 relative">
+                    {/* 🌟 下書きバッジ！ */}
+                    {post.isDraft && (
+                      <span className="absolute -top-3 -right-3 bg-amber-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md z-10">
+                        下書き
+                      </span>
+                    )}
+                    
+                    {post.post_at ? (
+                      <>
+                        <div className="text-sm text-slate-500 font-bold mb-1">
+                          {post.post_at.toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo", month: "short", day: "numeric" })}
+                        </div>
+                        <div className="text-xl font-extrabold text-slate-800">
+                          {post.post_at.toLocaleTimeString("ja-JP", { timeZone: "Asia/Tokyo", hour: "2-digit", minute: "2-digit" })}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-slate-400 font-bold py-2">日時未定</div>
+                    )}
                   </div>
 
-                  {/* 🌟 内容表示（チャンネル名と画像） */}
+                  {/* 内容表示 */}
                   <div className="flex-1">
                     <div className="flex gap-2 mb-2 items-center">
-                      <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">Discord</span>
-
-                      {/* IDを名前に変換して表示 */}
-                      {post.discord_channel_id && (
-                        <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded-md flex items-center gap-1">
-                          📢 {DISCORD_CHANNELS.find(c => c.id === post.discord_channel_id)?.name || "不明なチャンネル"}
-                        </span>
-                      )}
+                      {post.post_to_discord && <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">Discord</span>}
+                      {post.post_to_x && <span className="px-3 py-1 bg-black text-white text-xs font-bold rounded-full">𝕏 (Twitter)</span>}
                     </div>
+                    
+                    {post.post_to_discord && (
+                      <p className="text-slate-700 font-medium line-clamp-2 mb-2 text-sm border-l-4 border-indigo-200 pl-3">
+                        <span className="text-xs text-slate-400 block mb-1">Discord:</span>
+                        {post.discord_content || "（本文なし）"}
+                      </p>
+                    )}
+                    
+                    {post.post_to_x && (
+                      <p className="text-slate-700 font-medium line-clamp-2 text-sm border-l-4 border-slate-300 pl-3">
+                        <span className="text-xs text-slate-400 block mb-1">X (Twitter):</span>
+                        {post.x_content || "（本文なし）"}
+                      </p>
+                    )}
 
-                    <p className="text-slate-700 font-medium line-clamp-2">
-                      {post.discord_content}
-                    </p>
-
-                    {/* 画像のサムネイル表示 */}
                     {post.image_file_ids && Array.isArray(post.image_file_ids) && (post.image_file_ids as string[]).length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-2">
                         {(post.image_file_ids as string[]).map((imgBase64, index) => (
-                          <img
-                            key={index}
-                            src={imgBase64}
-                            alt={`添付画像 ${index + 1}`}
-                            className="w-16 h-16 object-cover rounded-md border border-slate-200 shadow-sm"
-                          />
+                          <img key={index} src={imgBase64} alt={`添付画像 ${index + 1}`} className="w-16 h-16 object-cover rounded-md border border-slate-200 shadow-sm" />
                         ))}
                       </div>
                     )}
@@ -142,7 +150,6 @@ export default async function Dashboard() {
                     </a>
                     <DeleteButton id={post.id} deleteAction={deletePost} />
                   </div>
-
                 </div>
               </div>
             ))}

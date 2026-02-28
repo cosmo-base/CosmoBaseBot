@@ -6,16 +6,17 @@ export async function POST(request: Request) {
     const data = await request.json();
     const newPost = await prisma.scheduledPost.create({
       data: {
-        post_to_discord: data.postToDiscord !== undefined ? data.postToDiscord : true,
-        post_to_x: data.postToX || false,
+        post_to_discord: data.postToDiscord,
+        post_to_x: data.postToX,
         discord_channel_id: data.discordChannelId || "",
         discord_content: data.discordContent || "",
         x_content: data.xContent || "",
-        post_at: new Date(data.postAt),
+        
+        // 🌟 時間が空っぽなら null を保存
+        post_at: data.postAt ? new Date(data.postAt) : null,
 
         is_recurring: data.isRecurring || false,
         recurrence_pattern: data.recurrencePattern || null,
-
         isDraft: data.isDraft || false,
         image_file_ids: data.imageFileIds,
         status: "PENDING",
