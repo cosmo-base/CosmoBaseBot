@@ -2,15 +2,14 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
-  // ① 「今」の時間から少し前の時間まで、送信すべき投稿を探す
   const now = new Date();
   
   try {
     const postsToSend = await prisma.scheduledPost.findMany({
       where: {
         status: "PENDING",
-        post_at: { lte: now }, // 今の時間より過去（または同じ）になっているもの
-        isDraft: false, // 下書き（Draft）ではないものだけを厳選する！
+        post_at: { lte: now },
+        isDraft: false, 
       },
     });
 
@@ -18,10 +17,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: "送信する投稿はありませんでした" });
     }
 
-    // ② 見つかった投稿を、順番にDiscordに送信していく
     for (const post of postsToSend) {
       try {
-        // 🌟 修正：TypeScriptに「この箱(配列)には何でも入るよ」と明記してエラーを消す！
         let files: any[] = [];
         
         if (post.image_file_ids && Array.isArray(post.image_file_ids)) {
@@ -38,7 +35,7 @@ export async function GET(request: Request) {
         const formData = new FormData();
         
         formData.append("payload_json", JSON.stringify({ 
-          content: post.discord_content,
+          content: post.discord_content || "",
           allowed_mentions: { parse: ["users", "roles", "everyone"] } 
         }));
 
@@ -61,14 +58,15 @@ export async function GET(request: Request) {
         */
 
         // ③ 送信が成功したあとの処理
-        if (post.isRecurring && post.recurrencePattern) {
+        // 🌟 修正：データベースの正しい名前（is_recurring, recurrence_pattern）に直しました！
+        if (post.is_recurring && post.recurrence_pattern) {
           const nextDate = new Date(post.post_at);
           
-          if (post.recurrencePattern === "daily") {
+          if (post.recurrence_pattern === "daily") {
             nextDate.setDate(nextDate.getDate() + 1); // 1日後
-          } else if (post.recurrencePattern === "weekly") {
+          } else if (post.recurrence_pattern === "weekly") {
             nextDate.setDate(nextDate.getDate() + 7); // 7日後
-          } else if (post.recurrencePattern === "monthly") {
+          } else if (post.recurrence_pattern === "monthly") {
             nextDate.setMonth(nextDate.getMonth() + 1); // 1ヶ月後
           }
 
