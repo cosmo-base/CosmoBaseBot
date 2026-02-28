@@ -2,8 +2,8 @@
 
 export default function DeleteButton({ id, deleteAction }: { id: string, deleteAction: (formData: FormData) => void }) {
   return (
-    <form 
-      action={deleteAction} 
+    <form
+      action={deleteAction}
       onSubmit={(e) => {
         if (!confirm("本当にこの投稿スケジュールを削除しますか？")) {
           e.preventDefault(); // キャンセルされたら削除をストップ

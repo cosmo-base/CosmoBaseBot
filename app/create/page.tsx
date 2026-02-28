@@ -8,7 +8,7 @@ export default function CreatePost() {
   const [discordContent, setDiscordContent] = useState("");
   const [postAt, setPostAt] = useState("");
   const [imageFiles, setImageFiles] = useState<File[]>([]);
-  
+
   // 定期投稿用のState（状態管理）
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrencePattern, setRecurrencePattern] = useState("WEEKLY"); // デフォルトは「毎週」
@@ -50,15 +50,15 @@ export default function CreatePost() {
           discordContent,
           xContent: null,
           postAt: new Date(postAt).toISOString(),
-          
+
           // APIに定期投稿の設定も送る
           isRecurring: isRecurring,
           recurrencePattern: isRecurring ? recurrencePattern : null,
-          
+
           usePoll: false,
           pollOptions: null,
           pollDuration: null,
-          imageFileIds: base64Images.length > 0 ? base64Images : null, 
+          imageFileIds: base64Images.length > 0 ? base64Images : null,
         }),
       });
 
@@ -78,7 +78,7 @@ export default function CreatePost() {
   return (
     <div className="min-h-screen bg-slate-50 p-12">
       <div className="max-w-3xl mx-auto">
-        
+
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-extrabold text-slate-800">時間指定投稿の作成</h1>
@@ -90,7 +90,7 @@ export default function CreatePost() {
         </div>
 
         <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 space-y-8">
-          
+
           <section className="bg-indigo-50/50 p-6 rounded-xl border border-indigo-100">
             <h2 className="text-lg font-bold text-indigo-900 mb-4 flex items-center gap-2">
               <span className="bg-indigo-200 text-indigo-800 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
@@ -133,16 +133,16 @@ export default function CreatePost() {
               画像を添付
             </h2>
             <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:bg-slate-50 transition-colors">
-              <input 
-                type="file" 
-                multiple 
+              <input
+                type="file"
+                multiple
                 accept="image/*"
                 onChange={(e) => {
                   if (e.target.files) {
                     setImageFiles(Array.from(e.target.files));
                   }
                 }}
-                className="hidden" 
+                className="hidden"
                 id="image-upload"
               />
               <label htmlFor="image-upload" className="cursor-pointer block">
@@ -170,13 +170,55 @@ export default function CreatePost() {
               <span className="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center text-sm">3</span>
               投稿日時を設定 <span className="text-red-500">*</span>
             </h2>
-            <input
-              type="datetime-local"
-              step="1800"
-              className="w-full max-w-md p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-bold bg-white"
-              value={postAt}
-              onChange={(e) => setPostAt(e.target.value)}
-            />
+            <div className="flex gap-2">
+              {/* 日付の選択 */}
+              <input
+                type="date"
+                value={postAt ? postAt.split("T")[0] : ""}
+                onChange={(e) => {
+                  const newDate = e.target.value;
+                  if (!newDate) {
+                    setPostAt("");
+                    return;
+                  }
+                  const timePart = postAt ? postAt.split("T")[1] : "00:00";
+                  setPostAt(`${newDate}T${timePart}`);
+                }}
+                className="border p-2 rounded w-full text-black"
+              />
+
+              {/* 時間（00〜23）の選択 */}
+              <select
+                value={postAt ? postAt.split("T")[1]?.split(":")[0] : "00"}
+                onChange={(e) => {
+                  // もし日付が未入力なら、今日の日付を自動セットする親切設計
+                  const datePart = postAt ? postAt.split("T")[0] : new Date().toISOString().split("T")[0];
+                  const minutePart = postAt ? postAt.split("T")[1]?.split(":")[1] : "00";
+                  setPostAt(`${datePart}T${e.target.value}:${minutePart}`);
+                }}
+                className="border p-2 rounded text-black"
+              >
+                {Array.from({ length: 24 }).map((_, i) => {
+                  const h = i.toString().padStart(2, "0");
+                  return <option key={h} value={h}>{h}時</option>;
+                })}
+              </select>
+
+              {/* 分（00か30のみ！）の選択 */}
+              <select
+                value={postAt ? postAt.split("T")[1]?.split(":")[1] : "00"}
+                onChange={(e) => {
+                  const datePart = postAt ? postAt.split("T")[0] : new Date().toISOString().split("T")[0];
+                  const hourPart = postAt ? postAt.split("T")[1]?.split(":")[0] : "00";
+                  setPostAt(`${datePart}T${hourPart}:${e.target.value}`);
+                }}
+                className="border p-2 rounded text-black"
+              >
+                <option value="00">00分</option>
+                <option value="30">30分</option>
+              </select>
+            </div>
+
           </section>
 
           {/* ここが定期投稿の設定エリアです！ */}
@@ -215,12 +257,12 @@ export default function CreatePost() {
           </section>
 
           <div className="pt-6">
-            <button 
+            <button
               onClick={handleSubmit}
               disabled={!isFormValid() || isSubmitting}
               className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-bold rounded-xl text-lg transition-colors shadow-md"
             >
-              {isSubmitting ? "保存中..." : "スケジュールを保存する"} 
+              {isSubmitting ? "保存中..." : "スケジュールを保存する"}
             </button>
           </div>
 

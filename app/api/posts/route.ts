@@ -12,11 +12,11 @@ export async function POST(request: Request) {
         discord_content: data.discordContent,
         x_content: data.xContent,
         post_at: new Date(data.postAt),
-        
+
         // 定期投稿の設定
         is_recurring: data.isRecurring || false,
         recurrence_pattern: data.recurrencePattern || null,
-        
+
         // 🌟 変更：エラーの原因になっていた存在しないアンケート項目（use_pollなど）を削除しました
         image_file_ids: data.imageFileIds,
         status: "PENDING",

@@ -11,7 +11,7 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
     const post = await prisma.scheduledPost.findUnique({
       where: { id },
     });
-    
+
     if (!post) return NextResponse.json({ error: "見つかりません" }, { status: 404 });
     return NextResponse.json(post);
   } catch (error) {

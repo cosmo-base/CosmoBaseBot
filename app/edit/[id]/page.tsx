@@ -12,11 +12,11 @@ export default function EditPost() {
   const [discordChannelId, setDiscordChannelId] = useState("");
   const [discordContent, setDiscordContent] = useState("");
   const [postAt, setPostAt] = useState("");
-  
+
   // 🌟変更：画像を「既に保存されているもの」と「新しく追加するもの」に分けました
-  const [existingImages, setExistingImages] = useState<string[]>([]); 
-  const [newImageFiles, setNewImageFiles] = useState<File[]>([]); 
-  
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -28,12 +28,12 @@ export default function EditPost() {
           const data = await res.json();
           setDiscordChannelId(data.discord_channel_id || "");
           setDiscordContent(data.discord_content || "");
-          
+
           // 🌟追加：保存済みの画像データ（Base64）があればStateにセットする
           if (data.image_file_ids && Array.isArray(data.image_file_ids)) {
             setExistingImages(data.image_file_ids);
           }
-          
+
           const dateObj = new Date(data.post_at);
           dateObj.setMinutes(dateObj.getMinutes() - dateObj.getTimezoneOffset());
           setPostAt(dateObj.toISOString().slice(0, 16));
@@ -95,7 +95,7 @@ export default function EditPost() {
           discordChannelId,
           discordContent,
           postAt,
-          imageFileIds: finalImages.length > 0 ? finalImages : null, 
+          imageFileIds: finalImages.length > 0 ? finalImages : null,
         }),
       });
 
@@ -119,7 +119,7 @@ export default function EditPost() {
   return (
     <div className="min-h-screen bg-slate-50 p-12">
       <div className="max-w-3xl mx-auto">
-        
+
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-extrabold text-slate-800">スケジュールの編集</h1>
@@ -131,7 +131,7 @@ export default function EditPost() {
         </div>
 
         <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 space-y-8">
-          
+
           <section className="bg-indigo-50/50 p-6 rounded-xl border border-indigo-100">
             <h2 className="text-lg font-bold text-indigo-900 mb-4 flex items-center gap-2">
               <span className="bg-indigo-200 text-indigo-800 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
@@ -174,12 +174,12 @@ export default function EditPost() {
               <span className="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span>
               画像の確認と追加
             </h2>
-            
+
             {/* 画像の追加ボタン */}
             <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:bg-slate-50 transition-colors mb-6">
-              <input 
-                type="file" 
-                multiple 
+              <input
+                type="file"
+                multiple
                 accept="image/*"
                 onChange={(e) => {
                   if (e.target.files) {
@@ -187,7 +187,7 @@ export default function EditPost() {
                     setNewImageFiles(prev => [...prev, ...Array.from(e.target.files!)]);
                   }
                 }}
-                className="hidden" 
+                className="hidden"
                 id="image-upload"
               />
               <label htmlFor="image-upload" className="cursor-pointer block">
@@ -198,7 +198,7 @@ export default function EditPost() {
 
             {/* サムネイル一覧表示エリア */}
             <div className="space-y-4">
-              
+
               {/* 保存済みの画像 */}
               {existingImages.length > 0 && (
                 <div className="bg-slate-100 p-4 rounded-xl border border-slate-200">
@@ -253,12 +253,12 @@ export default function EditPost() {
           </section>
 
           <div className="pt-6">
-            <button 
+            <button
               onClick={handleSubmit}
               disabled={!isFormValid() || isSubmitting}
               className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-bold rounded-xl text-lg transition-colors shadow-md"
             >
-              {isSubmitting ? "更新中..." : "変更を保存する"} 
+              {isSubmitting ? "更新中..." : "変更を保存する"}
             </button>
           </div>
 

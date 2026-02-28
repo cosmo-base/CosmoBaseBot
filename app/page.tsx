@@ -36,7 +36,7 @@ export default async function Dashboard() {
 
   return (
     <div className="flex min-h-screen bg-slate-50">
-      
+
       {/* サイドバー */}
       <div className="w-72 bg-slate-900 text-white flex flex-col shadow-2xl z-10">
         <div className="p-8">
@@ -92,7 +92,7 @@ export default async function Dashboard() {
                       {post.post_at.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })}
                     </div>
                   </div>
-                  
+
                   {/* 内容表示 */}
                   <div>
                     <div className="flex gap-2 mb-2">
