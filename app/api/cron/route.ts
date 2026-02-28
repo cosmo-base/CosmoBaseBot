@@ -17,7 +17,7 @@ const now = new Date();
       },
     });
 
-    console.log(`📋 見つかった投稿待ちデータ: ${pendingPosts.length}件`); // 🌟ログ用
+    console.log(`📋 見つかった投稿待ちデータ: ${pendingPosts.length}件`);
 
     if (pendingPosts.length === 0) {
       return NextResponse.json({ message: "現在、投稿待ちのデータはありませんでした。" });
@@ -66,14 +66,13 @@ const now = new Date();
             where: { id: post.id },
             data: { post_at: nextDate },
           });
-          console.log(`✅ 定期投稿完了: 次回は ${nextDate.toISOString()} にセットされました`); // 🌟ログ用
+          console.log(`✅ 定期投稿完了: 次回は ${nextDate.toISOString()} にセットされました`); 
           
         } else {
-          await prisma.scheduledPost.update({
+          await prisma.scheduledPost.delete({
             where: { id: post.id },
-            data: { status: "POSTED" },
           });
-          console.log(`✅ 通常投稿完了: POSTEDにしました`); // 🌟ログ用
+          console.log(`✅ 通常投稿完了: データベースから削除しました！`);
         }
 
       } catch (error) {
