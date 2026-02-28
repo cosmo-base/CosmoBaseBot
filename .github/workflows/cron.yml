@@ -2,8 +2,8 @@ name: CosmoBase Auto Cron
 
 on:
   schedule:
-    # 5分ごとに自動実行する設定（GitHubの無料枠の仕様上、最短5分間隔になります）
-    - cron: '*/5 * * * *'
+    # 毎時 00分 と 30分 に実行する
+    - cron: '0,30 * * * *'
   workflow_dispatch: # 手動でテスト実行できるようにするボタン
 
 jobs:
