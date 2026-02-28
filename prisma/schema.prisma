@@ -40,3 +40,11 @@ model RecurringPost {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }
+
+// 🌟 テンプレート保存用の新しいテーブル
+model Template {
+  id        String   @id @default(cuid())
+  name      String   // テンプレートの名前（例：イベント告知用）
+  content   String   // テンプレートの本文
+  createdAt DateTime @default(now())
+}
