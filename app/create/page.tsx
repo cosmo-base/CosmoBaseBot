@@ -172,6 +172,7 @@ export default function CreatePost() {
             </h2>
             <input
               type="datetime-local"
+              step="1800"
               className="w-full max-w-md p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-bold bg-white"
               value={postAt}
               onChange={(e) => setPostAt(e.target.value)}
