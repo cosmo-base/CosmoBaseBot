@@ -14,7 +14,7 @@ export default function CreatePost() {
   const [discordContent, setDiscordContent] = useState("");
   const [postAt, setPostAt] = useState("");
   const [imageFiles, setImageFiles] = useState<File[]>([]);
-  
+
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrencePattern, setRecurrencePattern] = useState("daily");
 
@@ -118,23 +118,38 @@ export default function CreatePost() {
     }
   };
 
-  // 🌟 MarkdownとメンションをDiscord風に翻訳する魔法の関数
+  // 🌟 MarkdownとメンションをDiscord風に翻訳する魔法の関数（ネタバレ対応の最強版）
   const renderDiscordPreview = (text: string) => {
     if (!text) return <span className="text-[#949ba4] italic">メッセージを入力するとここに表示されます...</span>;
+
     let html = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    
-    // メンションの翻訳
+
+    // コードブロックとインラインコード
+    html = html.replace(/```([\s\S]*?)```/g, '<pre class="bg-[#2b2d31] p-3 rounded-md font-mono text-xs border border-[#1e1f22] my-2 overflow-x-auto">$1</pre>');
+    html = html.replace(/`([^`]+)`/g, '<code class="bg-[#2b2d31] px-1.5 py-0.5 rounded-md font-mono text-[13px]">$1</code>');
+
+    // 引用とリンク
+    html = html.replace(/^&gt; (.*$)/gm, '<div class="border-l-4 border-[#4f545c] pl-3 my-1 text-[#b5bac1]">$1</div>');
+    html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" class="text-[#00a8fc] hover:underline" target="_blank">$1</a>');
+
+    // メンション
     DISCORD_ROLES.forEach(role => {
       const regex = new RegExp(`&lt;@&amp;${role.id}&gt;`, 'g');
-      html = html.replace(regex, `<span class="bg-[#5865F2]/20 text-[#c9cdfb] px-1 rounded font-medium">@${role.name}</span>`);
+      html = html.replace(regex, `<span class="bg-[#5865F2]/30 text-[#c9cdfb] px-1 rounded font-medium">@${role.name}</span>`);
     });
-    html = html.replace(/@everyone/g, `<span class="bg-[#5865F2]/20 text-[#c9cdfb] px-1 rounded font-medium">@everyone</span>`);
-    html = html.replace(/@here/g, `<span class="bg-[#5865F2]/20 text-[#c9cdfb] px-1 rounded font-medium">@here</span>`);
-    
-    // MDの翻訳（太字・斜体・取り消し線・改行）
+    html = html.replace(/@everyone/g, `<span class="bg-[#5865F2]/30 text-[#c9cdfb] px-1 rounded font-medium">@everyone</span>`);
+    html = html.replace(/@here/g, `<span class="bg-[#5865F2]/30 text-[#c9cdfb] px-1 rounded font-medium">@here</span>`);
+
+    // 🌟 ネタバレ（スポイラー）機能追加！文字を透明にしてホバーで表示
+    html = html.replace(/\|\|(.*?)\|\|/g, '<span class="bg-[#1e1f22] text-transparent hover:text-[#dbdee1] rounded px-1 cursor-pointer transition-colors duration-200" title="ネタバレ">$1</span>');
+
+    // 文字装飾（太字・斜体・下線・取消線）
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    html = html.replace(/__(.*?)__/g, '<span class="underline">$1</span>');
     html = html.replace(/~~(.*?)~~/g, '<del>$1</del>');
+
+    // 改行
     html = html.replace(/\n/g, '<br />');
 
     return <div dangerouslySetInnerHTML={{ __html: html }} className="text-sm text-[#dbdee1] leading-relaxed break-words" />;
@@ -176,7 +191,6 @@ export default function CreatePost() {
                 </select>
               </div>
 
-              {/* 🌟 修正：空っぽでも常に表示されるテンプレートBOX */}
               <div className="mb-5 bg-white p-4 border border-slate-200 rounded-xl">
                 <label className="block text-slate-700 font-bold mb-2 text-sm">💾 テンプレートから呼び出す</label>
                 <select
@@ -212,25 +226,24 @@ export default function CreatePost() {
                 <label className="block text-indigo-900 font-bold mb-2 text-sm">メッセージ内容</label>
                 <textarea
                   rows={8}
-                  className="w-full p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-slate-800 bg-white placeholder-slate-400 font-medium"
+                  className="w-full p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-slate-800 bg-white placeholder-slate-500 font-medium"
                   value={discordContent}
                   onChange={(e) => setDiscordContent(e.target.value)}
-                  placeholder="ここにDiscordに送信するメッセージを入力します。**太字**もプレビューできます。"
+                  placeholder="ここにメッセージを入力します。&#13;&#10;**太字**、__下線__、~~取消線~~、||ネタバレ||、[リンク](URL)、> 引用、```コード``` などが使えます！"
                 />
-                
-                {/* 🌟 修正：わかりやすくなったテンプレート保存BOX */}
+
                 {discordContent && (
                   <div className="mt-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
                     <label className="block text-slate-700 font-bold mb-2 text-sm">📝 この文章を新しいテンプレートとして保存</label>
                     <div className="flex gap-2 items-center">
-                      <input 
-                        type="text" 
-                        placeholder="テンプレート名 (例: 定例会用)" 
+                      <input
+                        type="text"
+                        placeholder="テンプレート名 (例: 定例会用)"
                         value={newTemplateName}
                         onChange={(e) => setNewTemplateName(e.target.value)}
                         className="flex-1 p-2 text-sm border border-slate-300 rounded bg-white outline-none focus:border-indigo-500"
                       />
-                      <button 
+                      <button
                         onClick={handleSaveTemplate}
                         disabled={isSavingTemplate}
                         className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded text-sm font-bold transition-colors whitespace-nowrap"
@@ -309,9 +322,9 @@ export default function CreatePost() {
 
               <div className="bg-slate-100 p-4 rounded-xl border border-slate-200">
                 <label className="flex items-center gap-3 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={isRecurring} 
+                  <input
+                    type="checkbox"
+                    checked={isRecurring}
                     onChange={(e) => setIsRecurring(e.target.checked)}
                     className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
                   />
@@ -358,22 +371,20 @@ export default function CreatePost() {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-baseline gap-2 mb-1">
-                      {/*Botの名前を変更！ */}
                       <span className="font-bold text-white text-base hover:underline cursor-pointer">Cosmo Base</span>
                       <span className="bg-[#5865F2] text-white text-[10px] px-1.5 py-0.5 rounded font-bold">BOT</span>
                       <span className="text-[#949ba4] text-xs">今日 {postAt ? postAt.split("T")[1] : "00:00"}</span>
                     </div>
-                    
-                    {/*プレビューの翻訳機能を適用！ */}
+
                     {renderDiscordPreview(discordContent)}
 
                     {imageFiles.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-2">
                         {imageFiles.map((file, i) => (
-                          <img 
-                            key={i} 
-                            src={URL.createObjectURL(file)} 
-                            alt="preview" 
+                          <img
+                            key={i}
+                            src={URL.createObjectURL(file)}
+                            alt="preview"
                             className="max-w-[200px] max-h-[200px] rounded-lg object-cover cursor-pointer"
                           />
                         ))}

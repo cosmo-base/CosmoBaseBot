@@ -15,10 +15,10 @@ export default function EditPost() {
   const [discordChannelId, setDiscordChannelId] = useState("");
   const [discordContent, setDiscordContent] = useState("");
   const [postAt, setPostAt] = useState("");
-  
+
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
-  
+
   const [templates, setTemplates] = useState<Template[]>([]);
   const [newTemplateName, setNewTemplateName] = useState("");
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
@@ -131,19 +131,35 @@ export default function EditPost() {
     }
   };
 
+  // 🌟 MarkdownとメンションをDiscord風に翻訳する魔法の関数（ネタバレ対応の最強版）
   const renderDiscordPreview = (text: string) => {
     if (!text) return <span className="text-[#949ba4] italic">メッセージを入力するとここに表示されます...</span>;
+
     let html = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    html = html.replace(/```([\s\S]*?)```/g, '<pre class="bg-[#2b2d31] p-3 rounded-md font-mono text-xs border border-[#1e1f22] my-2 overflow-x-auto">$1</pre>');
+    html = html.replace(/`([^`]+)`/g, '<code class="bg-[#2b2d31] px-1.5 py-0.5 rounded-md font-mono text-[13px]">$1</code>');
+
+    html = html.replace(/^&gt; (.*$)/gm, '<div class="border-l-4 border-[#4f545c] pl-3 my-1 text-[#b5bac1]">$1</div>');
+    html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" class="text-[#00a8fc] hover:underline" target="_blank">$1</a>');
+
     DISCORD_ROLES.forEach(role => {
       const regex = new RegExp(`&lt;@&amp;${role.id}&gt;`, 'g');
-      html = html.replace(regex, `<span class="bg-[#5865F2]/20 text-[#c9cdfb] px-1 rounded font-medium">@${role.name}</span>`);
+      html = html.replace(regex, `<span class="bg-[#5865F2]/30 text-[#c9cdfb] px-1 rounded font-medium">@${role.name}</span>`);
     });
-    html = html.replace(/@everyone/g, `<span class="bg-[#5865F2]/20 text-[#c9cdfb] px-1 rounded font-medium">@everyone</span>`);
-    html = html.replace(/@here/g, `<span class="bg-[#5865F2]/20 text-[#c9cdfb] px-1 rounded font-medium">@here</span>`);
+    html = html.replace(/@everyone/g, `<span class="bg-[#5865F2]/30 text-[#c9cdfb] px-1 rounded font-medium">@everyone</span>`);
+    html = html.replace(/@here/g, `<span class="bg-[#5865F2]/30 text-[#c9cdfb] px-1 rounded font-medium">@here</span>`);
+
+    // 🌟 ネタバレ（スポイラー）機能追加！
+    html = html.replace(/\|\|(.*?)\|\|/g, '<span class="bg-[#1e1f22] text-transparent hover:text-[#dbdee1] rounded px-1 cursor-pointer transition-colors duration-200" title="ネタバレ">$1</span>');
+
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    html = html.replace(/__(.*?)__/g, '<span class="underline">$1</span>');
     html = html.replace(/~~(.*?)~~/g, '<del>$1</del>');
+
     html = html.replace(/\n/g, '<br />');
+
     return <div dangerouslySetInnerHTML={{ __html: html }} className="text-sm text-[#dbdee1] leading-relaxed break-words" />;
   };
 
@@ -216,18 +232,19 @@ export default function EditPost() {
                 <label className="block text-indigo-900 font-bold mb-2 text-sm">メッセージ内容</label>
                 <textarea
                   rows={8}
-                  className="w-full p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-slate-800 bg-white placeholder-slate-400 font-medium"
+                  className="w-full p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-slate-800 bg-white placeholder-slate-500 font-medium"
                   value={discordContent}
                   onChange={(e) => setDiscordContent(e.target.value)}
+                  placeholder="ここにメッセージを入力します。&#13;&#10;**太字**、__下線__、~~取消線~~、||ネタバレ||、[リンク](URL)、> 引用、```コード``` などが使えます！"
                 />
-                
+
                 {discordContent && (
                   <div className="mt-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
                     <label className="block text-slate-700 font-bold mb-2 text-sm">📝 この文章を新しいテンプレートとして保存</label>
                     <div className="flex gap-2 items-center">
-                      <input 
-                        type="text" 
-                        placeholder="テンプレート名 (例: 定例会用)" 
+                      <input
+                        type="text"
+                        placeholder="テンプレート名 (例: 定例会用)"
                         value={newTemplateName}
                         onChange={(e) => setNewTemplateName(e.target.value)}
                         className="flex-1 p-2 text-sm border border-slate-300 rounded bg-white outline-none focus:border-indigo-500"
@@ -329,7 +346,7 @@ export default function EditPost() {
                       <span className="bg-[#5865F2] text-white text-[10px] px-1.5 py-0.5 rounded font-bold">BOT</span>
                       <span className="text-[#949ba4] text-xs">今日 {postAt ? postAt.split("T")[1] : "00:00"}</span>
                     </div>
-                    
+
                     {renderDiscordPreview(discordContent)}
 
                     {(existingImages.length > 0 || newImageFiles.length > 0) && (
