@@ -83,16 +83,23 @@ export default async function Dashboard() {
           <div className="space-y-4">
             {scheduledPosts.map((post) => (
               <div key={post.id} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between hover:border-blue-300 transition-colors">
-                
-                {/* 🌟 flex-start でレイアウトを揃えました */}
+
                 <div className="flex items-start gap-6 w-full">
                   {/* 日時表示 */}
                   <div className="bg-slate-100 p-4 rounded-xl text-center min-w-[120px] shrink-0">
                     <div className="text-sm text-slate-500 font-bold mb-1">
-                      {post.post_at.toLocaleDateString("ja-JP", { month: "short", day: "numeric" })}
+                      {post.post_at.toLocaleDateString("ja-JP", {
+                        timeZone: "Asia/Tokyo", // 🌟 日本時間に強制！
+                        month: "short",
+                        day: "numeric"
+                      })}
                     </div>
                     <div className="text-xl font-extrabold text-slate-800">
-                      {post.post_at.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })}
+                      {post.post_at.toLocaleTimeString("ja-JP", {
+                        timeZone: "Asia/Tokyo", // 🌟 日本時間に強制！
+                        hour: "2-digit",
+                        minute: "2-digit"
+                      })}
                     </div>
                   </div>
 
@@ -100,7 +107,7 @@ export default async function Dashboard() {
                   <div className="flex-1">
                     <div className="flex gap-2 mb-2 items-center">
                       <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">Discord</span>
-                      
+
                       {/* IDを名前に変換して表示 */}
                       {post.discord_channel_id && (
                         <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded-md flex items-center gap-1">
@@ -108,7 +115,7 @@ export default async function Dashboard() {
                         </span>
                       )}
                     </div>
-                    
+
                     <p className="text-slate-700 font-medium line-clamp-2">
                       {post.discord_content}
                     </p>
@@ -117,10 +124,10 @@ export default async function Dashboard() {
                     {post.image_file_ids && Array.isArray(post.image_file_ids) && (post.image_file_ids as string[]).length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-2">
                         {(post.image_file_ids as string[]).map((imgBase64, index) => (
-                          <img 
-                            key={index} 
-                            src={imgBase64} 
-                            alt={`添付画像 ${index + 1}`} 
+                          <img
+                            key={index}
+                            src={imgBase64}
+                            alt={`添付画像 ${index + 1}`}
                             className="w-16 h-16 object-cover rounded-md border border-slate-200 shadow-sm"
                           />
                         ))}
