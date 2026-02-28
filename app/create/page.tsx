@@ -5,30 +5,24 @@ import { useRouter } from "next/navigation";
 import { DISCORD_CHANNELS } from "@/lib/discord-channels";
 import { DISCORD_ROLES } from "@/lib/discord-roles";
 
-// テンプレートの型定義
 type Template = { id: string; name: string; content: string };
 
 export default function CreatePost() {
   const router = useRouter();
 
-  // フォームの状態管理
   const [discordChannelId, setDiscordChannelId] = useState("");
   const [discordContent, setDiscordContent] = useState("");
   const [postAt, setPostAt] = useState("");
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   
-  // 🌟 定期投稿のステート
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrencePattern, setRecurrencePattern] = useState("daily");
 
-  // 🌟 テンプレートのステート
   const [templates, setTemplates] = useState<Template[]>([]);
   const [newTemplateName, setNewTemplateName] = useState("");
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 初回読み込み時にテンプレートを取得
   useEffect(() => {
     fetchTemplates();
   }, []);
@@ -36,10 +30,7 @@ export default function CreatePost() {
   const fetchTemplates = async () => {
     try {
       const res = await fetch("/api/templates");
-      if (res.ok) {
-        const data = await res.json();
-        setTemplates(data);
-      }
+      if (res.ok) setTemplates(await res.json());
     } catch (error) {
       console.error("テンプレート取得エラー", error);
     }
@@ -52,13 +43,11 @@ export default function CreatePost() {
     return true;
   };
 
-  // 🌟 メンションをテキストエリアに挿入する機能
   const insertMention = (roleId: string) => {
     const mentionText = roleId === "everyone" || roleId === "here" ? `@${roleId} ` : `<@&${roleId}> `;
     setDiscordContent((prev) => prev + mentionText);
   };
 
-  // 🌟 テンプレートを保存する機能
   const handleSaveTemplate = async () => {
     if (!newTemplateName || !discordContent) {
       alert("テンプレート名と本文を入力してください！");
@@ -74,7 +63,7 @@ export default function CreatePost() {
       if (res.ok) {
         alert("テンプレートを保存しました！🎉");
         setNewTemplateName("");
-        fetchTemplates(); // 一覧を再取得
+        fetchTemplates();
       } else {
         alert("保存に失敗しました");
       }
@@ -85,7 +74,6 @@ export default function CreatePost() {
     }
   };
 
-  // 🌟 送信処理
   const handleSubmit = async () => {
     if (!isFormValid()) return;
     setIsSubmitting(true);
@@ -112,8 +100,8 @@ export default function CreatePost() {
           discordContent,
           postAt,
           imageFileIds: imageFileIds.length > 0 ? imageFileIds : null,
-          isRecurring,       // 定期投稿フラグ
-          recurrencePattern, // 毎日・毎週・毎月
+          isRecurring,
+          recurrencePattern,
         }),
       });
 
@@ -130,6 +118,28 @@ export default function CreatePost() {
     }
   };
 
+  // 🌟 MarkdownとメンションをDiscord風に翻訳する魔法の関数
+  const renderDiscordPreview = (text: string) => {
+    if (!text) return <span className="text-[#949ba4] italic">メッセージを入力するとここに表示されます...</span>;
+    let html = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    
+    // メンションの翻訳
+    DISCORD_ROLES.forEach(role => {
+      const regex = new RegExp(`&lt;@&amp;${role.id}&gt;`, 'g');
+      html = html.replace(regex, `<span class="bg-[#5865F2]/20 text-[#c9cdfb] px-1 rounded font-medium">@${role.name}</span>`);
+    });
+    html = html.replace(/@everyone/g, `<span class="bg-[#5865F2]/20 text-[#c9cdfb] px-1 rounded font-medium">@everyone</span>`);
+    html = html.replace(/@here/g, `<span class="bg-[#5865F2]/20 text-[#c9cdfb] px-1 rounded font-medium">@here</span>`);
+    
+    // MDの翻訳（太字・斜体・取り消し線・改行）
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    html = html.replace(/~~(.*?)~~/g, '<del>$1</del>');
+    html = html.replace(/\n/g, '<br />');
+
+    return <div dangerouslySetInnerHTML={{ __html: html }} className="text-sm text-[#dbdee1] leading-relaxed break-words" />;
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 p-6 lg:p-12">
       <div className="max-w-7xl mx-auto">
@@ -143,13 +153,9 @@ export default function CreatePost() {
           </a>
         </div>
 
-        {/* 🌟 画面を左右に分割 (PCのみ) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          
           {/* 左側：入力フォーム */}
           <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 space-y-8">
-            
-            {/* 1. 送信設定＆テンプレート */}
             <section className="bg-indigo-50/50 p-6 rounded-xl border border-indigo-100">
               <h2 className="text-lg font-bold text-indigo-900 mb-4 flex items-center gap-2">
                 <span className="bg-indigo-200 text-indigo-800 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
@@ -170,26 +176,23 @@ export default function CreatePost() {
                 </select>
               </div>
 
-              {/* 🌟 テンプレート呼び出し */}
-              {templates.length > 0 && (
-                <div className="mb-5 bg-white p-3 border border-slate-200 rounded-xl">
-                  <label className="block text-slate-700 font-bold mb-2 text-xs">💾 テンプレートから呼び出す</label>
-                  <select
-                    onChange={(e) => {
-                      const selected = templates.find(t => t.id === e.target.value);
-                      if (selected) setDiscordContent(selected.content);
-                    }}
-                    className="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none cursor-pointer"
-                  >
-                    <option value="">テンプレートを選択...</option>
-                    {templates.map(t => (
-                      <option key={t.id} value={t.id}>{t.name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              {/* 🌟 修正：空っぽでも常に表示されるテンプレートBOX */}
+              <div className="mb-5 bg-white p-4 border border-slate-200 rounded-xl">
+                <label className="block text-slate-700 font-bold mb-2 text-sm">💾 テンプレートから呼び出す</label>
+                <select
+                  onChange={(e) => {
+                    const selected = templates.find(t => t.id === e.target.value);
+                    if (selected) setDiscordContent(selected.content);
+                  }}
+                  className="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none cursor-pointer bg-slate-50"
+                >
+                  <option value="">{templates.length === 0 ? "保存されたテンプレートはありません" : "テンプレートを選択..."}</option>
+                  {templates.map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
 
-              {/* 🌟 メンション簡単入力ボタン */}
               <div className="mb-3">
                 <label className="block text-indigo-900 font-bold mb-2 text-sm">📣 メンションを挿入</label>
                 <div className="flex flex-wrap gap-2">
@@ -212,32 +215,34 @@ export default function CreatePost() {
                   className="w-full p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-slate-800 bg-white placeholder-slate-400 font-medium"
                   value={discordContent}
                   onChange={(e) => setDiscordContent(e.target.value)}
-                  placeholder="ここにDiscordに送信するメッセージを入力します"
+                  placeholder="ここにDiscordに送信するメッセージを入力します。**太字**もプレビューできます。"
                 />
                 
-                {/* 🌟 テンプレートとして保存機能 */}
+                {/* 🌟 修正：わかりやすくなったテンプレート保存BOX */}
                 {discordContent && (
-                  <div className="mt-3 flex gap-2 items-center bg-white p-2 rounded-lg border border-slate-200">
-                    <input 
-                      type="text" 
-                      placeholder="テンプレート名 (例: 定例会用)" 
-                      value={newTemplateName}
-                      onChange={(e) => setNewTemplateName(e.target.value)}
-                      className="flex-1 p-2 text-sm border border-slate-300 rounded outline-none"
-                    />
-                    <button 
-                      onClick={handleSaveTemplate}
-                      disabled={isSavingTemplate}
-                      className="bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded text-sm font-bold transition-colors"
-                    >
-                      {isSavingTemplate ? "保存中..." : "今の文章を保存"}
-                    </button>
+                  <div className="mt-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <label className="block text-slate-700 font-bold mb-2 text-sm">📝 この文章を新しいテンプレートとして保存</label>
+                    <div className="flex gap-2 items-center">
+                      <input 
+                        type="text" 
+                        placeholder="テンプレート名 (例: 定例会用)" 
+                        value={newTemplateName}
+                        onChange={(e) => setNewTemplateName(e.target.value)}
+                        className="flex-1 p-2 text-sm border border-slate-300 rounded bg-white outline-none focus:border-indigo-500"
+                      />
+                      <button 
+                        onClick={handleSaveTemplate}
+                        disabled={isSavingTemplate}
+                        className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded text-sm font-bold transition-colors whitespace-nowrap"
+                      >
+                        {isSavingTemplate ? "保存中..." : "保存する"}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
             </section>
 
-            {/* 2. 画像追加 (既存のコードと同じ) */}
             <section>
               <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <span className="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span>
@@ -259,14 +264,11 @@ export default function CreatePost() {
               </div>
             </section>
 
-            {/* 3. 日時と定期投稿 */}
             <section>
               <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <span className="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center text-sm">3</span>
                 投稿日時と繰り返し <span className="text-red-500">*</span>
               </h2>
-              
-              {/* 時間指定 (完成済みの3分割UI) */}
               <div className="flex gap-2 max-w-md mb-4">
                 <input
                   type="date"
@@ -276,7 +278,7 @@ export default function CreatePost() {
                     if (!newDate) return setPostAt("");
                     setPostAt(`${newDate}T${postAt ? postAt.split("T")[1] : "07:00"}`);
                   }}
-                  className="w-full p-3 border border-slate-300 rounded-xl font-bold text-slate-700"
+                  className="w-full p-3 border border-slate-300 rounded-xl font-bold text-slate-700 bg-white"
                 />
                 <select
                   value={postAt ? postAt.split("T")[1]?.split(":")[0] : "07"}
@@ -284,7 +286,7 @@ export default function CreatePost() {
                     const datePart = postAt ? postAt.split("T")[0] : new Date().toISOString().split("T")[0];
                     setPostAt(`${datePart}T${e.target.value}:${postAt ? postAt.split("T")[1]?.split(":")[1] : "00"}`);
                   }}
-                  className="p-3 border border-slate-300 rounded-xl font-bold text-slate-700 cursor-pointer"
+                  className="p-3 border border-slate-300 rounded-xl font-bold text-slate-700 cursor-pointer bg-white"
                 >
                   {Array.from({ length: 16 }).map((_, i) => {
                     const h = (i + 7).toString().padStart(2, "0");
@@ -298,14 +300,13 @@ export default function CreatePost() {
                     const hourPart = postAt ? postAt.split("T")[1]?.split(":")[0] : "07";
                     setPostAt(`${datePart}T${hourPart}:${e.target.value}`);
                   }}
-                  className="p-3 border border-slate-300 rounded-xl font-bold text-slate-700 cursor-pointer"
+                  className="p-3 border border-slate-300 rounded-xl font-bold text-slate-700 cursor-pointer bg-white"
                 >
                   <option value="00">00分</option>
                   <option value="30">30分</option>
                 </select>
               </div>
 
-              {/* 🌟 定期投稿の設定UI */}
               <div className="bg-slate-100 p-4 rounded-xl border border-slate-200">
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input 
@@ -316,26 +317,23 @@ export default function CreatePost() {
                   />
                   <span className="font-bold text-slate-700">この投稿を定期的に繰り返す</span>
                 </label>
-                
                 {isRecurring && (
                   <div className="mt-4 flex items-center gap-3">
                     <span className="text-sm font-medium text-slate-600">頻度：</span>
                     <select
                       value={recurrencePattern}
                       onChange={(e) => setRecurrencePattern(e.target.value)}
-                      className="p-2 border border-slate-300 rounded-lg outline-none font-bold text-slate-700"
+                      className="p-2 border border-slate-300 rounded-lg outline-none font-bold text-slate-700 bg-white"
                     >
                       <option value="daily">毎日</option>
                       <option value="weekly">毎週</option>
                       <option value="monthly">毎月</option>
                     </select>
-                    <span className="text-xs text-slate-500">※指定した時間に自動的に再セットされます</span>
                   </div>
                 )}
               </div>
             </section>
 
-            {/* 送信ボタン */}
             <div className="pt-6">
               <button
                 onClick={handleSubmit}
@@ -347,7 +345,7 @@ export default function CreatePost() {
             </div>
           </div>
 
-          {/* 🌟 右側：Discord リアルタイムプレビュー */}
+          {/* 右側：Discord リアルタイムプレビュー */}
           <div className="hidden lg:block">
             <div className="sticky top-12">
               <h3 className="text-xl font-extrabold text-slate-800 mb-4 flex items-center gap-2">
@@ -355,33 +353,20 @@ export default function CreatePost() {
               </h3>
               <div className="bg-[#313338] text-gray-100 p-6 rounded-xl shadow-xl min-h-[300px] border border-[#1e1f22]">
                 <div className="flex gap-4">
-                  {/* ボットのアイコン（ダミー） */}
-                  <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center shrink-0">
-                    🤖
+                  <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center shrink-0 overflow-hidden">
+                    <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="bot icon" className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-baseline gap-2 mb-1">
-                      <span className="font-bold text-white text-base hover:underline cursor-pointer">CosmoBase広報Bot</span>
+                      {/*Botの名前を変更！ */}
+                      <span className="font-bold text-white text-base hover:underline cursor-pointer">Cosmo Base</span>
                       <span className="bg-[#5865F2] text-white text-[10px] px-1.5 py-0.5 rounded font-bold">BOT</span>
                       <span className="text-[#949ba4] text-xs">今日 {postAt ? postAt.split("T")[1] : "00:00"}</span>
                     </div>
                     
-                    {/* 本文のプレビュー（メンションを青色にする簡易装飾つき） */}
-                    <div className="text-sm text-[#dbdee1] whitespace-pre-wrap leading-relaxed">
-                      {discordContent ? (
-                        discordContent.split(/(@everyone|@here|<@&\d+>)/g).map((part, i) => {
-                          if (part.match(/(@everyone|@here|<@&\d+>)/)) {
-                            // メンションっぽい部分はDiscord特有の青色背景にする
-                            return <span key={i} className="bg-[#5865F2]/20 text-[#c9cdfb] px-1 rounded font-medium hover:bg-[#5865F2]/40 cursor-pointer">{part}</span>;
-                          }
-                          return part;
-                        })
-                      ) : (
-                        <span className="text-[#949ba4] italic">メッセージを入力するとここに表示されます...</span>
-                      )}
-                    </div>
+                    {/*プレビューの翻訳機能を適用！ */}
+                    {renderDiscordPreview(discordContent)}
 
-                    {/* 画像のプレビュー */}
                     {imageFiles.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-2">
                         {imageFiles.map((file, i) => (
