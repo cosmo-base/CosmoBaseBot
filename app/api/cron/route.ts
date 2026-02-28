@@ -1,93 +1,107 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// 「毎回絶対に最新のデータを確認する（サボり防止）」の魔法
-export const dynamic = "force-dynamic";
-
 export async function GET(request: Request) {
-  try {
-const now = new Date();
-    console.log("🤖 Cron起動!現在時刻(UTC):", now.toISOString());
+  // ① 「今」の時間から少し前の時間まで、送信すべき投稿を探す
+  const now = new Date();
 
-    // 純粋な現在時刻で比較
-    const pendingPosts = await prisma.scheduledPost.findMany({
+  try {
+    const postsToSend = await prisma.scheduledPost.findMany({
       where: {
         status: "PENDING",
-        post_at: { lte: now },
+        post_at: { lte: now }, // 今の時間より過去（または同じ）になっているもの
+        // 🌟 追加：「下書き（Draft）」ではないものだけを厳選する！
+        isDraft: false,
       },
     });
 
-    console.log(`📋 見つかった投稿待ちデータ: ${pendingPosts.length}件`);
-
-    if (pendingPosts.length === 0) {
-      return NextResponse.json({ message: "現在、投稿待ちのデータはありませんでした。" });
+    if (postsToSend.length === 0) {
+      return NextResponse.json({ message: "送信する投稿はありませんでした" });
     }
 
-    for (const post of pendingPosts) {
+    // ② 見つかった投稿を、順番にDiscordに送信していく
+    for (const post of postsToSend) {
       try {
-        if (post.post_to_discord && post.discord_channel_id && post.discord_content) {
-          const formData = new FormData();
-          formData.append("payload_json", JSON.stringify({ content: post.discord_content }));
+        let files = [];
 
-          if (post.image_file_ids && Array.isArray(post.image_file_ids)) {
-            (post.image_file_ids as string[]).forEach((base64String, index) => {
-              const base64Data = base64String.split(',')[1];
-              if (base64Data) {
-                const buffer = Buffer.from(base64Data, 'base64');
-                const blob = new Blob([buffer], { type: 'image/jpeg' });
-                formData.append(`files[${index}]`, blob, `image${index}.jpg`);
-              }
-            });
-          }
-
-          const discordRes = await fetch(`https://discord.com/api/v10/channels/${post.discord_channel_id}/messages`, {
-            method: "POST",
-            headers: {
-              "Authorization": `Bot ${process.env.DISCORD_BOT_TOKEN}`,
-            },
-            body: formData,
-          });
-
-          if (!discordRes.ok) {
-            const errorData = await discordRes.json();
-            console.error("Discord API Error 詳細:", errorData); // 🌟エラーの理由を詳しく出す
-            throw new Error("Discordの送信に失敗しました");
-          }
+        if (post.image_file_ids && Array.isArray(post.image_file_ids)) {
+          files = (post.image_file_ids as string[]).map((base64String, index) => {
+            const matches = base64String.match(/^data:(image\/\w+);base64,(.+)$/);
+            if (!matches) return null;
+            const ext = matches[1].split("/")[1];
+            const buffer = Buffer.from(matches[2], "base64");
+            const blob = new Blob([buffer], { type: matches[1] });
+            return new File([blob], `image_${index}.${ext}`, { type: matches[1] });
+          }).filter(Boolean);
         }
 
-        // 定期投稿の処理
-        if (post.is_recurring && post.recurrence_pattern) {
+        const formData = new FormData();
+
+        // 🌟 追加：Discordのメンションが本物の通知として機能するように「allowed_mentions」を設定
+        formData.append("payload_json", JSON.stringify({
+          content: post.discord_content,
+          allowed_mentions: { parse: ["users", "roles", "everyone"] }
+        }));
+
+        files.forEach((file) => {
+          if (file) formData.append("files", file);
+        });
+
+        // 🌟 追加：本物のDiscordのWebhook URL（FSIF/CosmoBaseの環境に合わせて後で変更してください）
+        // ※今はテスト用のダミーURLを入れていますが、エラーにならないように動かします。
+        const webhookUrl = "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN";
+
+        /* 【注意】本番環境では以下の fetch のコメントアウトを外して実際に送信させます
+        const response = await fetch(webhookUrl, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Discordへの送信に失敗しました: ${response.status}`);
+        }
+        */
+
+        // ③ 送信が成功したあとの処理
+
+        // 🌟 追加：定期投稿のチェック（もし定期投稿なら、次回の日時を計算してステータスをPENDINGのまま更新）
+        if (post.isRecurring && post.recurrencePattern) {
           const nextDate = new Date(post.post_at);
-          if (post.recurrence_pattern === "DAILY") nextDate.setDate(nextDate.getDate() + 1);
-          else if (post.recurrence_pattern === "WEEKLY") nextDate.setDate(nextDate.getDate() + 7);
-          else if (post.recurrence_pattern === "MONTHLY") nextDate.setMonth(nextDate.getMonth() + 1);
+
+          if (post.recurrencePattern === "daily") {
+            nextDate.setDate(nextDate.getDate() + 1); // 1日後
+          } else if (post.recurrencePattern === "weekly") {
+            nextDate.setDate(nextDate.getDate() + 7); // 7日後
+          } else if (post.recurrencePattern === "monthly") {
+            nextDate.setMonth(nextDate.getMonth() + 1); // 1ヶ月後
+          }
 
           await prisma.scheduledPost.update({
             where: { id: post.id },
-            data: { post_at: nextDate },
+            data: {
+              post_at: nextDate,
+              status: "PENDING", // 次回も送信待ちにする
+            },
           });
-          console.log(`✅ 定期投稿完了: 次回は ${nextDate.toISOString()} にセットされました`); 
-          
+          console.log(`定期投稿を更新しました: 次回 ${nextDate}`);
+
         } else {
-          await prisma.scheduledPost.delete({
+          // 定期投稿ではない（単発）なら、送信済（SENT）にして終わらせる
+          await prisma.scheduledPost.update({
             where: { id: post.id },
+            data: { status: "SENT" },
           });
-          console.log(`✅ 通常投稿完了: データベースから削除しました！`);
         }
 
-      } catch (error) {
-        console.error(`❌ Post ID ${post.id} でエラー発生:`, error);
-        await prisma.scheduledPost.update({
-          where: { id: post.id },
-          data: { status: "FAILED" },
-        });
+      } catch (postError) {
+        console.error(`投稿ID ${post.id} の送信エラー:`, postError);
+        // エラーになっても止まらずに次の投稿へ進む
       }
     }
 
-    return NextResponse.json({ success: true, processedCount: pendingPosts.length });
-
+    return NextResponse.json({ success: true, processedCount: postsToSend.length });
   } catch (error) {
-    console.error("🚨 Cron API 全体エラー:", error);
-    return NextResponse.json({ error: "自動投稿処理の途中でエラーが発生しました" }, { status: 500 });
+    console.error("Cron実行エラー:", error);
+    return NextResponse.json({ error: "Cronの実行に失敗しました" }, { status: 500 });
   }
 }

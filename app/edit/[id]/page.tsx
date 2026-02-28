@@ -12,12 +12,18 @@ export default function EditPost() {
   const router = useRouter();
   const id = params.id as string;
 
+  const [activeTab, setActiveTab] = useState<"discord" | "x">("discord");
+
   const [discordChannelId, setDiscordChannelId] = useState("");
   const [discordContent, setDiscordContent] = useState("");
+  const [xContent, setXContent] = useState("");
   const [postAt, setPostAt] = useState("");
 
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
+
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurrencePattern, setRecurrencePattern] = useState("daily");
 
   const [templates, setTemplates] = useState<Template[]>([]);
   const [newTemplateName, setNewTemplateName] = useState("");
@@ -47,12 +53,16 @@ export default function EditPost() {
         const data = await res.json();
         setDiscordChannelId(data.discord_channel_id || "");
         setDiscordContent(data.discord_content || "");
+        setXContent(data.x_content || "");
         if (data.image_file_ids && Array.isArray(data.image_file_ids)) {
           setExistingImages(data.image_file_ids);
         }
         const dateObj = new Date(data.post_at);
         dateObj.setMinutes(dateObj.getMinutes() - dateObj.getTimezoneOffset());
         setPostAt(dateObj.toISOString().slice(0, 16));
+
+        setIsRecurring(data.isRecurring || false);
+        if (data.recurrencePattern) setRecurrencePattern(data.recurrencePattern);
       }
     } catch (error) {
       console.error(error);
@@ -64,7 +74,11 @@ export default function EditPost() {
   const isFormValid = () => {
     if (!discordChannelId) return false;
     if (!postAt) return false;
-    if (!discordContent && existingImages.length === 0 && newImageFiles.length === 0) return false;
+    if (!discordContent && !xContent && existingImages.length === 0 && newImageFiles.length === 0) return false;
+
+    const hour = parseInt(postAt.split("T")[1]?.split(":")[0] || "0", 10);
+    if (hour < 7 || hour > 22) return false;
+
     return true;
   };
 
@@ -92,8 +106,8 @@ export default function EditPost() {
     }
   };
 
-  const handleSubmit = async () => {
-    if (!isFormValid()) return;
+  const handleSubmit = async (isDraft: boolean) => {
+    if (!isDraft && !isFormValid()) return;
     setIsSubmitting(true);
     try {
       let convertedNewImages: string[] = [];
@@ -115,51 +129,45 @@ export default function EditPost() {
         body: JSON.stringify({
           discordChannelId,
           discordContent,
+          xContent,
           postAt,
           imageFileIds: finalImages.length > 0 ? finalImages : null,
+          isRecurring,
+          recurrencePattern,
+          isDraft,
         }),
       });
 
       if (response.ok) {
-        alert("スケジュールの更新が完了しました！🎉");
+        alert(isDraft ? "下書きとして更新しました！💾" : "スケジュールの更新が完了しました！🎉");
         router.push("/");
       } else {
-        alert("更新エラー: 画像のサイズが大きすぎる可能性があります");
+        alert("更新エラー: データの保存に失敗しました");
       }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // 🌟 MarkdownとメンションをDiscord風に翻訳する魔法の関数（ネタバレ対応の最強版）
   const renderDiscordPreview = (text: string) => {
     if (!text) return <span className="text-[#949ba4] italic">メッセージを入力するとここに表示されます...</span>;
-
     let html = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
     html = html.replace(/```([\s\S]*?)```/g, '<pre class="bg-[#2b2d31] p-3 rounded-md font-mono text-xs border border-[#1e1f22] my-2 overflow-x-auto">$1</pre>');
     html = html.replace(/`([^`]+)`/g, '<code class="bg-[#2b2d31] px-1.5 py-0.5 rounded-md font-mono text-[13px]">$1</code>');
-
     html = html.replace(/^&gt; (.*$)/gm, '<div class="border-l-4 border-[#4f545c] pl-3 my-1 text-[#b5bac1]">$1</div>');
     html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" class="text-[#00a8fc] hover:underline" target="_blank">$1</a>');
-
     DISCORD_ROLES.forEach(role => {
       const regex = new RegExp(`&lt;@&amp;${role.id}&gt;`, 'g');
       html = html.replace(regex, `<span class="bg-[#5865F2]/30 text-[#c9cdfb] px-1 rounded font-medium">@${role.name}</span>`);
     });
     html = html.replace(/@everyone/g, `<span class="bg-[#5865F2]/30 text-[#c9cdfb] px-1 rounded font-medium">@everyone</span>`);
     html = html.replace(/@here/g, `<span class="bg-[#5865F2]/30 text-[#c9cdfb] px-1 rounded font-medium">@here</span>`);
-
-    // 🌟 ネタバレ（スポイラー）機能追加！
     html = html.replace(/\|\|(.*?)\|\|/g, '<span class="bg-[#1e1f22] text-transparent hover:text-[#dbdee1] rounded px-1 cursor-pointer transition-colors duration-200" title="ネタバレ">$1</span>');
-
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
     html = html.replace(/__(.*?)__/g, '<span class="underline">$1</span>');
     html = html.replace(/~~(.*?)~~/g, '<del>$1</del>');
-
     html = html.replace(/\n/g, '<br />');
-
     return <div dangerouslySetInnerHTML={{ __html: html }} className="text-sm text-[#dbdee1] leading-relaxed break-words" />;
   };
 
@@ -178,101 +186,124 @@ export default function EditPost() {
           </a>
         </div>
 
+        <div className="flex gap-4 mb-6">
+          <button
+            onClick={() => setActiveTab("discord")}
+            className={`px-6 py-3 rounded-t-xl font-bold text-lg transition-colors border-b-4 ${activeTab === "discord" ? "bg-white border-[#5865F2] text-[#5865F2] shadow-sm" : "bg-slate-200 border-transparent text-slate-500 hover:bg-slate-300"
+              }`}
+          >
+            👾 Discord 連携
+          </button>
+          <button
+            onClick={() => setActiveTab("x")}
+            className={`px-6 py-3 rounded-t-xl font-bold text-lg transition-colors border-b-4 ${activeTab === "x" ? "bg-white border-black text-black shadow-sm" : "bg-slate-200 border-transparent text-slate-500 hover:bg-slate-300"
+              }`}
+          >
+            𝕏 (Twitter) 連携
+          </button>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* 左側：入力フォーム */}
-          <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 space-y-8">
-            <section className="bg-indigo-50/50 p-6 rounded-xl border border-indigo-100">
-              <h2 className="text-lg font-bold text-indigo-900 mb-4 flex items-center gap-2">
-                <span className="bg-indigo-200 text-indigo-800 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
-                Discord 送信設定
-              </h2>
+          <div className="bg-white p-8 rounded-b-2xl rounded-tr-2xl shadow-sm border border-slate-200 space-y-8">
 
-              <div className="mb-5">
-                <label className="block text-indigo-900 font-bold mb-2 text-sm">送信先チャンネル <span className="text-red-500">*</span></label>
-                <select
-                  value={discordChannelId}
-                  onChange={(e) => setDiscordChannelId(e.target.value)}
-                  // 🌟 文字を濃く太くしました
-                  className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-slate-800 font-bold"
-                >
-                  <option value="">チャンネルを選択してください</option>
-                  {DISCORD_CHANNELS.map((channel) => (
-                    <option key={channel.id} value={channel.id}>{channel.name}</option>
-                  ))}
-                </select>
-              </div>
+            {activeTab === "discord" ? (
+              <section className="bg-indigo-50/50 p-6 rounded-xl border border-indigo-100">
+                <h2 className="text-lg font-bold text-indigo-900 mb-4 flex items-center gap-2">
+                  <span className="bg-indigo-200 text-indigo-800 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
+                  Discord 送信設定
+                </h2>
 
-              <div className="mb-5 bg-white p-4 border border-slate-200 rounded-xl">
-                <label className="block text-slate-700 font-bold mb-2 text-sm">💾 テンプレートから呼び出す</label>
-                <select
-                  onChange={(e) => {
-                    const selected = templates.find(t => t.id === e.target.value);
-                    if (selected) setDiscordContent(selected.content);
-                  }}
-                  // 🌟 文字を濃く太くしました
-                  className="w-full p-2 border border-slate-300 rounded-lg outline-none cursor-pointer bg-slate-50 text-slate-800 font-bold text-sm"
-                >
-                  <option value="">{templates.length === 0 ? "保存されたテンプレートはありません" : "テンプレートを選択..."}</option>
-                  {templates.map(t => (
-                    <option key={t.id} value={t.id}>{t.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="mb-3">
-                <label className="block text-indigo-900 font-bold mb-2 text-sm">📣 メンションを挿入</label>
-                <div className="flex flex-wrap gap-2">
-                  {DISCORD_ROLES.map((role) => (
-                    <button
-                      key={role.id}
-                      onClick={() => insertMention(role.id)}
-                      className="px-3 py-1.5 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 text-xs font-bold rounded-lg transition-colors border border-indigo-200"
-                    >
-                      {role.name}
-                    </button>
-                  ))}
+                <div className="mb-5">
+                  <label className="block text-indigo-900 font-bold mb-2 text-sm">送信先チャンネル <span className="text-red-500">*</span></label>
+                  <select
+                    value={discordChannelId}
+                    onChange={(e) => setDiscordChannelId(e.target.value)}
+                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold text-slate-800"
+                  >
+                    <option value="">チャンネルを選択してください</option>
+                    {DISCORD_CHANNELS.map((channel) => (
+                      <option key={channel.id} value={channel.id}>{channel.name}</option>
+                    ))}
+                  </select>
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-indigo-900 font-bold mb-2 text-sm">メッセージ内容</label>
-                <textarea
-                  rows={8}
-                  className="w-full p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none bg-white font-medium text-slate-800 placeholder-slate-500"
-                  value={discordContent}
-                  onChange={(e) => setDiscordContent(e.target.value)}
-                  placeholder="ここにメッセージを入力します。&#13;&#10;**太字**、__下線__、~~取消線~~、||ネタバレ||、[リンク](URL)、> 引用、```コード``` などが使えます！"
-                />
+                <div className="mb-5 bg-white p-4 border border-slate-200 rounded-xl">
+                  <label className="block text-slate-700 font-bold mb-2 text-sm">💾 テンプレートから呼び出す</label>
+                  <select
+                    onChange={(e) => {
+                      const selected = templates.find(t => t.id === e.target.value);
+                      if (selected) setDiscordContent(selected.content);
+                    }}
+                    className="w-full p-2 border border-slate-300 rounded-lg outline-none cursor-pointer bg-slate-50 text-slate-800 font-bold text-sm"
+                  >
+                    <option value="">{templates.length === 0 ? "保存されたテンプレートはありません" : "テンプレートを選択..."}</option>
+                    {templates.map(t => (
+                      <option key={t.id} value={t.id}>{t.name}</option>
+                    ))}
+                  </select>
+                </div>
 
-                {discordContent && (
-                  <div className="mt-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <label className="block text-slate-700 font-bold mb-2 text-sm">📝 この文章を新しいテンプレートとして保存</label>
-                    <div className="flex gap-2 items-center">
-                      <input
-                        type="text"
-                        placeholder="テンプレート名 (例: 定例会用)"
-                        value={newTemplateName}
-                        onChange={(e) => setNewTemplateName(e.target.value)}
-                        // 🌟 文字とプレースホルダーを濃く太くしました
-                        className="flex-1 p-2 text-sm border border-slate-300 rounded bg-white outline-none focus:border-indigo-500 text-slate-800 font-bold placeholder-slate-500"
-                      />
-                      <button
-                        onClick={handleSaveTemplate}
-                        disabled={isSavingTemplate}
-                        className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded text-sm font-bold transition-colors whitespace-nowrap"
-                      >
-                        {isSavingTemplate ? "保存中..." : "保存する"}
+                <div className="mb-3">
+                  <label className="block text-indigo-900 font-bold mb-2 text-sm">📣 メンションを挿入</label>
+                  <div className="flex flex-wrap gap-2">
+                    {DISCORD_ROLES.map((role) => (
+                      <button key={role.id} onClick={() => insertMention(role.id)} className="px-3 py-1.5 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 text-xs font-bold rounded-lg transition-colors border border-indigo-200">
+                        {role.name}
                       </button>
-                    </div>
+                    ))}
                   </div>
-                )}
-              </div>
-            </section>
+                </div>
+
+                <div>
+                  <label className="block text-indigo-900 font-bold mb-2 text-sm">メッセージ内容</label>
+                  <textarea
+                    rows={8}
+                    className="w-full p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none bg-white font-medium text-slate-800 placeholder-slate-500"
+                    value={discordContent}
+                    onChange={(e) => setDiscordContent(e.target.value)}
+                    placeholder="ここにメッセージを入力します。&#13;&#10;**太字**、__下線__、~~取消線~~、||ネタバレ||、[リンク](URL)、> 引用、```コード``` などが使えます！"
+                  />
+
+                  {discordContent && (
+                    <div className="mt-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                      <label className="block text-slate-700 font-bold mb-2 text-sm">📝 この文章を新しいテンプレートとして保存</label>
+                      <div className="flex gap-2 items-center">
+                        <input type="text" placeholder="テンプレート名 (例: 定例会用)" value={newTemplateName} onChange={(e) => setNewTemplateName(e.target.value)} className="flex-1 p-2 text-sm border border-slate-300 rounded bg-white outline-none focus:border-indigo-500 text-slate-800 font-bold placeholder-slate-500" />
+                        <button onClick={handleSaveTemplate} disabled={isSavingTemplate} className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded text-sm font-bold transition-colors whitespace-nowrap">
+                          {isSavingTemplate ? "保存中..." : "保存する"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </section>
+            ) : (
+              <section className="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                  <span className="bg-slate-200 text-slate-800 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
+                  𝕏 (Twitter) 送信設定
+                </h2>
+
+                <div>
+                  <label className="block text-slate-800 font-bold mb-2 text-sm">ポスト内容</label>
+                  <textarea
+                    rows={6}
+                    className="w-full p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-black outline-none resize-none bg-white font-medium text-slate-800 placeholder-slate-500"
+                    value={xContent}
+                    onChange={(e) => setXContent(e.target.value)}
+                    placeholder="ここにX（Twitter）に投稿する内容を入力します。"
+                  />
+                  <div className="text-right mt-1 text-xs font-bold">
+                    <span className={xContent.length > 140 ? "text-red-500" : "text-slate-500"}>{xContent.length} / 140文字</span>
+                  </div>
+                </div>
+              </section>
+            )}
 
             <section>
               <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <span className="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span>
-                画像の確認と追加
+                画像の確認と追加（共通）
               </h2>
               <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:bg-slate-50 transition-colors mb-6">
                 <input type="file" multiple accept="image/*" onChange={(e) => e.target.files && setNewImageFiles(prev => [...prev, ...Array.from(e.target.files!)])} className="hidden" id="image-upload" />
@@ -319,63 +350,112 @@ export default function EditPost() {
             <section>
               <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <span className="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center text-sm">3</span>
-                投稿日時を設定 <span className="text-red-500">*</span>
+                投稿日時と繰り返し <span className="text-red-500">*</span>
               </h2>
-              <div className="flex gap-2 max-w-md">
-                <input type="date" value={postAt ? postAt.split("T")[0] : ""} onChange={(e) => setPostAt(`${e.target.value || ""}T${postAt ? postAt.split("T")[1] : "07:00"}`)} className="w-full p-3 border border-slate-300 rounded-xl font-bold text-slate-700 bg-white" />
-                <select value={postAt ? postAt.split("T")[1]?.split(":")[0] : "07"} onChange={(e) => setPostAt(`${postAt ? postAt.split("T")[0] : new Date().toISOString().split("T")[0]}T${e.target.value}:${postAt ? postAt.split("T")[1]?.split(":")[1] : "00"}`)} className="p-3 border border-slate-300 rounded-xl font-bold text-slate-700 cursor-pointer bg-white">
-                  {Array.from({ length: 16 }).map((_, i) => <option key={i} value={(i + 7).toString().padStart(2, "0")}>{(i + 7).toString().padStart(2, "0")}時</option>)}
-                </select>
-                <select value={postAt ? postAt.split("T")[1]?.split(":")[1] : "00"} onChange={(e) => setPostAt(`${postAt ? postAt.split("T")[0] : new Date().toISOString().split("T")[0]}T${postAt ? postAt.split("T")[1]?.split(":")[0] : "07"}:${e.target.value}`)} className="p-3 border border-slate-300 rounded-xl font-bold text-slate-700 cursor-pointer bg-white">
-                  <option value="00">00分</option>
-                  <option value="30">30分</option>
-                </select>
+              <div className="flex flex-col gap-2 max-w-md mb-4">
+                <input type="datetime-local" value={postAt} onChange={(e) => setPostAt(e.target.value)} className="w-full p-4 border border-slate-300 rounded-xl font-bold text-slate-800 bg-white focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer" />
+                {postAt && (parseInt(postAt.split("T")[1]?.split(":")[0] || "0", 10) < 7 || parseInt(postAt.split("T")[1]?.split(":")[0] || "0", 10) > 22) && (
+                  <p className="text-red-500 text-sm font-bold mt-1">※ 投稿時間は 7:00 〜 22:00 の間で指定してください</p>
+                )}
+              </div>
+
+              <div className="bg-slate-100 p-4 rounded-xl border border-slate-200">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500" />
+                  <span className="font-bold text-slate-700">この投稿を定期的に繰り返す</span>
+                </label>
+                {isRecurring && (
+                  <div className="mt-4 flex items-center gap-3">
+                    <span className="text-sm font-medium text-slate-600">頻度：</span>
+                    <select value={recurrencePattern} onChange={(e) => setRecurrencePattern(e.target.value)} className="p-2 border border-slate-300 rounded-lg outline-none font-bold text-slate-700 bg-white">
+                      <option value="daily">毎日</option>
+                      <option value="weekly">毎週</option>
+                      <option value="monthly">毎月</option>
+                    </select>
+                  </div>
+                )}
               </div>
             </section>
 
-            <div className="pt-6">
-              <button onClick={handleSubmit} disabled={!isFormValid() || isSubmitting} className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-bold rounded-xl text-lg transition-colors shadow-md">
-                {isSubmitting ? "更新中..." : "変更を保存する"}
+            <div className="pt-6 flex gap-4">
+              <button
+                onClick={() => handleSubmit(true)}
+                disabled={isSubmitting}
+                className="flex-1 py-4 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 text-white font-bold rounded-xl text-lg transition-colors shadow-md"
+              >
+                📝 下書き保存
+              </button>
+              <button
+                onClick={() => handleSubmit(false)}
+                disabled={!isFormValid() || isSubmitting}
+                className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-bold rounded-xl text-lg transition-colors shadow-md"
+              >
+                {isSubmitting ? "更新中..." : "🚀 スケジュールを更新"}
               </button>
             </div>
           </div>
 
-          {/* 右側：Discord リアルタイムプレビュー */}
           <div className="hidden lg:block">
             <div className="sticky top-12">
               <h3 className="text-xl font-extrabold text-slate-800 mb-4 flex items-center gap-2">
-                👀 Discord プレビュー
+                👀 {activeTab === "discord" ? "Discord" : "𝕏 (Twitter)"} プレビュー
               </h3>
-              <div className="bg-[#313338] text-gray-100 p-6 rounded-xl shadow-xl min-h-[300px] border border-[#1e1f22]">
-                <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center shrink-0 overflow-hidden">
-                    <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="bot icon" className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-baseline gap-2 mb-1">
-                      <span className="font-bold text-white text-base hover:underline cursor-pointer">Cosmo Base</span>
-                      <span className="bg-[#5865F2] text-white text-[10px] px-1.5 py-0.5 rounded font-bold">BOT</span>
-                      <span className="text-[#949ba4] text-xs">今日 {postAt ? postAt.split("T")[1] : "00:00"}</span>
+
+              {activeTab === "discord" ? (
+                <div className="bg-[#313338] text-gray-100 p-6 rounded-xl shadow-xl min-h-[300px] border border-[#1e1f22]">
+                  <div className="flex gap-4">
+                    <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center shrink-0 overflow-hidden">
+                      <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="bot icon" className="w-full h-full object-cover" />
                     </div>
-
-                    {renderDiscordPreview(discordContent)}
-
-                    {(existingImages.length > 0 || newImageFiles.length > 0) && (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {existingImages.map((src, i) => (
-                          <img key={`prev-ext-${i}`} src={src} alt="preview" className="max-w-[150px] max-h-[150px] rounded-lg object-cover" />
-                        ))}
-                        {newImageFiles.map((file, i) => (
-                          <img key={`prev-new-${i}`} src={URL.createObjectURL(file)} alt="preview" className="max-w-[150px] max-h-[150px] rounded-lg object-cover" />
-                        ))}
+                    <div className="flex-1">
+                      <div className="flex items-baseline gap-2 mb-1">
+                        <span className="font-bold text-white text-base hover:underline cursor-pointer">Cosmo Base</span>
+                        <span className="bg-[#5865F2] text-white text-[10px] px-1.5 py-0.5 rounded font-bold">BOT</span>
+                        <span className="text-[#949ba4] text-xs">今日 {postAt ? postAt.split("T")[1] : "00:00"}</span>
                       </div>
-                    )}
+                      {renderDiscordPreview(discordContent)}
+                      {(existingImages.length > 0 || newImageFiles.length > 0) && (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {existingImages.map((src, i) => (
+                            <img key={`prev-ext-${i}`} src={src} alt="preview" className="max-w-[150px] max-h-[150px] rounded-lg object-cover" />
+                          ))}
+                          {newImageFiles.map((file, i) => (
+                            <img key={`prev-new-${i}`} src={URL.createObjectURL(file)} alt="preview" className="max-w-[150px] max-h-[150px] rounded-lg object-cover" />
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-white text-black p-6 rounded-xl shadow-xl min-h-[300px] border border-slate-200">
+                  <div className="flex gap-4">
+                    <div className="w-12 h-12 rounded-full bg-slate-200 shrink-0"></div>
+                    <div className="flex-1">
+                      <div className="flex items-baseline gap-1 mb-1">
+                        <span className="font-bold text-base hover:underline cursor-pointer">CosmoBase公式</span>
+                        <span className="text-slate-500 text-sm">@cosmobase_fsif</span>
+                        <span className="text-slate-500 text-sm">· 1秒前</span>
+                      </div>
+                      <div className="text-sm whitespace-pre-wrap">
+                        {xContent || <span className="text-slate-400 italic">入力した内容がここに表示されます...</span>}
+                      </div>
+                      {(existingImages.length > 0 || newImageFiles.length > 0) && (
+                        <div className="mt-3 grid grid-cols-2 gap-1 rounded-2xl overflow-hidden border border-slate-200">
+                          {existingImages.slice(0, 4).map((src, i) => (
+                            <img key={`prev-ext-x-${i}`} src={src} alt="preview" className="w-full h-full object-cover aspect-video" />
+                          ))}
+                          {newImageFiles.slice(0, 4 - existingImages.length).map((file, i) => (
+                            <img key={`prev-new-x-${i}`} src={URL.createObjectURL(file)} alt="preview" className="w-full h-full object-cover aspect-video" />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-
         </div>
       </div>
     </div>

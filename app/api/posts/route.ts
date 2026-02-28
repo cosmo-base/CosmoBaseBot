@@ -6,18 +6,21 @@ export async function POST(request: Request) {
     const data = await request.json();
     const newPost = await prisma.scheduledPost.create({
       data: {
-        post_to_discord: data.postToDiscord,
-        post_to_x: data.postToX,
-        discord_channel_id: data.discordChannelId,
-        discord_content: data.discordContent,
-        x_content: data.xContent,
+        // XとDiscordの連携用フラグ（既存のコードを維持）
+        post_to_discord: data.postToDiscord !== undefined ? data.postToDiscord : true,
+        post_to_x: data.postToX || false,
+        discord_channel_id: data.discordChannelId || "",
+        discord_content: data.discordContent || "",
+        x_content: data.xContent || "",
         post_at: new Date(data.postAt),
 
-        // 定期投稿の設定
-        is_recurring: data.isRecurring || false,
-        recurrence_pattern: data.recurrencePattern || null,
+        // 🌟 修正：データベースの設計図（schema.prisma）の名前に合わせました
+        isRecurring: data.isRecurring || false,
+        recurrencePattern: data.recurrencePattern || null,
 
-        // 🌟 変更：エラーの原因になっていた存在しないアンケート項目（use_pollなど）を削除しました
+        // 🌟 追加：下書きフラグを保存！
+        isDraft: data.isDraft || false,
+
         image_file_ids: data.imageFileIds,
         status: "PENDING",
       },

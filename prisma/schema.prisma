@@ -24,6 +24,7 @@ model ScheduledPost {
   updatedAt          DateTime @updatedAt
   is_recurring       Boolean  @default(false) // 定期投稿かどうか
   recurrence_pattern String?  // 繰り返しの種類（"DAILY", "WEEKLY", "MONTHLY" など）
+  isDraft           Boolean  @default(false)
 }
 
 // 定期投稿テーブル
