@@ -21,7 +21,7 @@ export default async function Dashboard() {
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="text-center p-12 bg-white rounded-2xl shadow-xl border border-slate-100">
           {/* 🌟 ログイン画面のロゴ */}
-          <img src="/CB-mark.png" alt="CosmoBase" className="w-24 h-24 mx-auto mb-6 rounded-2xl shadow-md" />
+          <img src="/CB-mark.png" alt="CosmoBase" className="w-24 h-24 object-contain bg-white p-2 mx-auto mb-6 rounded-2xl shadow-md" />
           <h1 className="text-4xl font-extrabold mb-3 text-slate-800 tracking-tight">CosmoBase Hub</h1>
           <p className="text-slate-500 mb-10 font-medium">FSIF 広報・SNS自動投稿システム</p>
           <a href="/api/auth/signin" className="inline-block bg-[#5865F2] text-white font-bold px-8 py-4 rounded-xl hover:bg-[#4752C4] transition-colors shadow-md">
@@ -44,7 +44,7 @@ export default async function Dashboard() {
       <div className="w-72 bg-slate-900 text-white flex flex-col shadow-2xl z-10">
         <div className="p-8 flex items-center gap-3">
           {/* 🌟 サイドバーのロゴ */}
-          <img src="/CB-mark.png" alt="logo" className="w-10 h-10 rounded-xl shadow-sm bg-white p-0.5" />
+          <img src="/CB-mark.png" alt="logo" className="w-10 h-10 object-contain rounded-xl shadow-sm bg-white p-1" />
           <div>
             <h2 className="text-xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
               CosmoBase
@@ -89,7 +89,7 @@ export default async function Dashboard() {
             {scheduledPosts.map((post) => (
               <div key={post.id} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between hover:border-blue-300 transition-colors">
                 <div className="flex items-start gap-6 w-full">
-                  
+
                   {/* 日時表示＆下書きバッジ */}
                   <div className="bg-slate-100 p-4 rounded-xl text-center min-w-[120px] shrink-0 relative">
                     {/* 🌟 下書きバッジ！ */}
@@ -98,7 +98,7 @@ export default async function Dashboard() {
                         下書き
                       </span>
                     )}
-                    
+
                     {post.post_at ? (
                       <>
                         <div className="text-sm text-slate-500 font-bold mb-1">
@@ -119,14 +119,14 @@ export default async function Dashboard() {
                       {post.post_to_discord && <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">Discord</span>}
                       {post.post_to_x && <span className="px-3 py-1 bg-black text-white text-xs font-bold rounded-full">𝕏 (Twitter)</span>}
                     </div>
-                    
+
                     {post.post_to_discord && (
                       <p className="text-slate-700 font-medium line-clamp-2 mb-2 text-sm border-l-4 border-indigo-200 pl-3">
                         <span className="text-xs text-slate-400 block mb-1">Discord:</span>
                         {post.discord_content || "（本文なし）"}
                       </p>
                     )}
-                    
+
                     {post.post_to_x && (
                       <p className="text-slate-700 font-medium line-clamp-2 text-sm border-l-4 border-slate-300 pl-3">
                         <span className="text-xs text-slate-400 block mb-1">X (Twitter):</span>

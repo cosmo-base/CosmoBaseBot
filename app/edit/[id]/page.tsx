@@ -19,10 +19,10 @@ export default function EditPost() {
   const [discordContent, setDiscordContent] = useState("");
   const [xContent, setXContent] = useState("");
   const [postAt, setPostAt] = useState("");
-  
+
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
-  
+
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrencePattern, setRecurrencePattern] = useState("daily");
 
@@ -52,24 +52,24 @@ export default function EditPost() {
       const res = await fetch(`/api/posts/${id}`);
       if (res.ok) {
         const data = await res.json();
-        
+
         setPostToDiscord(data.post_to_discord !== undefined ? data.post_to_discord : true);
         setPostToX(data.post_to_x || false);
-        
+
         setDiscordChannelId(data.discord_channel_id || "");
         setDiscordContent(data.discord_content || "");
         setXContent(data.x_content || "");
-        
+
         if (data.image_file_ids && Array.isArray(data.image_file_ids)) {
           setExistingImages(data.image_file_ids);
         }
-        
+
         if (data.post_at) {
           const dateObj = new Date(data.post_at);
           dateObj.setMinutes(dateObj.getMinutes() - dateObj.getTimezoneOffset());
           setPostAt(dateObj.toISOString().slice(0, 16));
         }
-        
+
         setIsRecurring(data.is_recurring || false);
         if (data.recurrence_pattern) setRecurrencePattern(data.recurrence_pattern);
       }
@@ -84,7 +84,7 @@ export default function EditPost() {
     if (!postToDiscord && !postToX) return false;
     if (postToDiscord && !discordChannelId) return false;
     if (!discordContent && !xContent && existingImages.length === 0 && newImageFiles.length === 0) return false;
-    
+
     if (!isDraft) {
       if (!postAt) return false;
       const hour = parseInt(postAt.split("T")[1]?.split(":")[0] || "0", 10);
@@ -191,7 +191,7 @@ export default function EditPost() {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <img src="/CB-mark.png" alt="logo" className="w-12 h-12 rounded-xl shadow-sm bg-white p-1" />
+            <img src="/CB-mark.png" alt="logo" className="w-12 h-12 object-contain rounded-xl shadow-sm bg-white p-1" />
             <div>
               <h1 className="text-3xl font-extrabold text-slate-800">スケジュールの編集</h1>
               <p className="text-slate-500 mt-1 font-medium">登録済みの投稿内容を変更します</p>
@@ -205,9 +205,9 @@ export default function EditPost() {
         <div className="flex flex-wrap gap-6 mb-6 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
           <p className="w-full text-sm font-bold text-slate-500 mb-2">送信先プラットフォームを選択</p>
           <label className="flex items-center gap-3 cursor-pointer group">
-            <input 
-              type="checkbox" 
-              checked={postToDiscord} 
+            <input
+              type="checkbox"
+              checked={postToDiscord}
               onChange={(e) => setPostToDiscord(e.target.checked)}
               className="w-6 h-6 text-[#5865F2] rounded-md focus:ring-[#5865F2]"
             />
@@ -215,11 +215,11 @@ export default function EditPost() {
               👾 Discord に投稿
             </span>
           </label>
-          
+
           <label className="flex items-center gap-3 cursor-pointer group">
-            <input 
-              type="checkbox" 
-              checked={postToX} 
+            <input
+              type="checkbox"
+              checked={postToX}
               onChange={(e) => setPostToX(e.target.checked)}
               className="w-6 h-6 text-black rounded-md focus:ring-black"
             />
@@ -231,7 +231,7 @@ export default function EditPost() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 space-y-8">
-            
+
             {postToDiscord && (
               <section className="bg-indigo-50/50 p-6 rounded-xl border border-indigo-100">
                 <h2 className="text-lg font-bold text-indigo-900 mb-4 flex items-center gap-2">
@@ -289,7 +289,7 @@ export default function EditPost() {
                     onChange={(e) => setDiscordContent(e.target.value)}
                     placeholder="ここにメッセージを入力します。&#13;&#10;**太字**、__下線__、~~取消線~~、||ネタバレ||、[リンク](URL)、> 引用、```コード``` などが使えます！"
                   />
-                  
+
                   {discordContent && (
                     <div className="mt-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
                       <label className="block text-slate-700 font-bold mb-2 text-sm">📝 この文章を新しいテンプレートとして保存</label>
@@ -311,7 +311,7 @@ export default function EditPost() {
                   <span className="bg-slate-200 text-slate-800 w-6 h-6 rounded-full flex items-center justify-center text-sm">𝕏</span>
                   𝕏 (Twitter) 送信設定
                 </h2>
-                
+
                 <div>
                   <label className="block text-slate-800 font-bold mb-2 text-sm">ポスト内容</label>
                   <textarea
@@ -381,11 +381,11 @@ export default function EditPost() {
                 投稿日時と繰り返し <span className="text-red-500">*</span>
               </h2>
               <div className="flex flex-col gap-2 max-w-md mb-4">
-                <input 
-                  type="datetime-local" 
-                  value={postAt} 
-                  onChange={(e) => setPostAt(e.target.value)} 
-                  className="w-full p-4 border border-slate-300 rounded-xl font-bold text-slate-800 bg-white focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer" 
+                <input
+                  type="datetime-local"
+                  value={postAt}
+                  onChange={(e) => setPostAt(e.target.value)}
+                  className="w-full p-4 border border-slate-300 rounded-xl font-bold text-slate-800 bg-white focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
                 />
                 <p className="text-slate-400 text-xs font-bold ml-1">※下書き保存の場合は未入力でもOKです</p>
                 {postAt && (parseInt(postAt.split("T")[1]?.split(":")[0] || "0", 10) < 7 || parseInt(postAt.split("T")[1]?.split(":")[0] || "0", 10) > 22) && (
@@ -429,11 +429,11 @@ export default function EditPost() {
             </div>
           </div>
 
-{/* 右側：プレビューエリア（両方チェックしたら両方縦に並ぶ！） */}
+          {/* 右側：プレビューエリア（両方チェックしたら両方縦に並ぶ！） */}
           <div className="hidden lg:block">
             {/* 🌟 外側の箱を固定し、はみ出た場合はこの中でスクロールできるようにしました！ */}
             <div className="sticky top-12 space-y-8 max-h-[calc(100vh-6rem)] overflow-y-auto pb-10 pr-4">
-              
+
               {postToDiscord && (
                 <div>
                   <h3 className="text-xl font-extrabold text-[#5865F2] mb-4 flex items-center gap-2">
@@ -442,7 +442,7 @@ export default function EditPost() {
                   <div className="bg-[#313338] text-gray-100 p-6 rounded-xl shadow-xl border border-[#1e1f22]">
                     <div className="flex gap-4">
                       <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 overflow-hidden">
-                        <img src="/CB-mark.png" alt="bot icon" className="w-full h-full object-cover p-0.5" />
+                        <img src="/CB-mark.png" alt="bot icon" className="w-full h-full object-contain p-0.5" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-baseline gap-2 mb-1">
@@ -475,7 +475,7 @@ export default function EditPost() {
                   <div className="bg-white text-black p-6 rounded-xl shadow-xl border border-slate-200">
                     <div className="flex gap-4">
                       <div className="w-12 h-12 rounded-full border border-slate-200 shrink-0 overflow-hidden">
-                        <img src="/CB-mark.png" alt="x icon" className="w-full h-full object-cover p-1" />
+                        <img src="/CB-mark.png" alt="x icon" className="w-full h-full object-contain p-1" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-baseline gap-1 mb-1">
@@ -501,7 +501,7 @@ export default function EditPost() {
                   </div>
                 </div>
               )}
-              
+
             </div>
           </div>
         </div>

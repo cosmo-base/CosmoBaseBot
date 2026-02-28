@@ -161,7 +161,7 @@ export default function CreatePost() {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <img src="/CB-mark.png" alt="logo" className="w-12 h-12 rounded-xl shadow-sm bg-white p-1" />
+            <img src="/CB-mark.png" alt="logo" className="w-12 h-12 object-contain rounded-xl shadow-sm bg-white p-1" />
             <div>
               <h1 className="text-3xl font-extrabold text-slate-800">新規投稿の作成</h1>
               <p className="text-slate-500 mt-1 font-medium">CosmoBase広報システム</p>
@@ -371,11 +371,11 @@ export default function CreatePost() {
             </div>
           </div>
 
-{/* 右側：プレビューエリア（両方チェックしたら両方縦に並ぶ！） */}
+          {/* 右側：プレビューエリア（両方チェックしたら両方縦に並ぶ！） */}
           <div className="hidden lg:block">
             {/* 🌟 外側の箱を固定し、はみ出た場合はこの中でスクロールできるようにしました！ */}
             <div className="sticky top-12 space-y-8 max-h-[calc(100vh-6rem)] overflow-y-auto pb-10 pr-4">
-              
+
               {postToDiscord && (
                 <div>
                   <h3 className="text-xl font-extrabold text-[#5865F2] mb-4 flex items-center gap-2">
@@ -384,7 +384,7 @@ export default function CreatePost() {
                   <div className="bg-[#313338] text-gray-100 p-6 rounded-xl shadow-xl border border-[#1e1f22]">
                     <div className="flex gap-4">
                       <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 overflow-hidden">
-                        <img src="/CB-mark.png" alt="bot icon" className="w-full h-full object-cover p-0.5" />
+                        <img src="/CB-mark.png" alt="bot icon" className="w-full h-full object-contain p-0.5" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-baseline gap-2 mb-1">
@@ -414,7 +414,7 @@ export default function CreatePost() {
                   <div className="bg-white text-black p-6 rounded-xl shadow-xl border border-slate-200">
                     <div className="flex gap-4">
                       <div className="w-12 h-12 rounded-full border border-slate-200 shrink-0 overflow-hidden">
-                        <img src="/CB-mark.png" alt="x icon" className="w-full h-full object-cover p-1" />
+                        <img src="/CB-mark.png" alt="x icon" className="w-full h-full object-contain p-1" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-baseline gap-1 mb-1">
@@ -437,7 +437,7 @@ export default function CreatePost() {
                   </div>
                 </div>
               )}
-              
+
             </div>
           </div>
         </div>
