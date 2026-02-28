@@ -429,76 +429,80 @@ export default function EditPost() {
             </div>
           </div>
 
-          <div className="hidden lg:block space-y-8">
-            
-            {postToDiscord && (
-              <div className="sticky top-12">
-                <h3 className="text-xl font-extrabold text-[#5865F2] mb-4 flex items-center gap-2">
-                  👀 Discord プレビュー
-                </h3>
-                <div className="bg-[#313338] text-gray-100 p-6 rounded-xl shadow-xl border border-[#1e1f22]">
-                  <div className="flex gap-4">
-                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 overflow-hidden">
-                      <img src="/CB-mark.png" alt="bot icon" className="w-full h-full object-cover p-0.5" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-baseline gap-2 mb-1">
-                        <span className="font-bold text-white text-base hover:underline cursor-pointer">Cosmo Base</span>
-                        <span className="bg-[#5865F2] text-white text-[10px] px-1.5 py-0.5 rounded font-bold">BOT</span>
-                        <span className="text-[#949ba4] text-xs">今日 {postAt ? postAt.split("T")[1] : "未定"}</span>
+{/* 右側：プレビューエリア（両方チェックしたら両方縦に並ぶ！） */}
+          <div className="hidden lg:block">
+            {/* 🌟 外側の箱を固定し、はみ出た場合はこの中でスクロールできるようにしました！ */}
+            <div className="sticky top-12 space-y-8 max-h-[calc(100vh-6rem)] overflow-y-auto pb-10 pr-4">
+              
+              {postToDiscord && (
+                <div>
+                  <h3 className="text-xl font-extrabold text-[#5865F2] mb-4 flex items-center gap-2">
+                    👀 Discord プレビュー
+                  </h3>
+                  <div className="bg-[#313338] text-gray-100 p-6 rounded-xl shadow-xl border border-[#1e1f22]">
+                    <div className="flex gap-4">
+                      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 overflow-hidden">
+                        <img src="/CB-mark.png" alt="bot icon" className="w-full h-full object-cover p-0.5" />
                       </div>
-                      {renderDiscordPreview(discordContent)}
-                      {(existingImages.length > 0 || newImageFiles.length > 0) && (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {existingImages.map((src, i) => (
-                            <img key={`prev-ext-${i}`} src={src} alt="preview" className="max-w-[150px] max-h-[150px] rounded-lg object-cover" />
-                          ))}
-                          {newImageFiles.map((file, i) => (
-                            <img key={`prev-new-${i}`} src={URL.createObjectURL(file)} alt="preview" className="max-w-[150px] max-h-[150px] rounded-lg object-cover" />
-                          ))}
+                      <div className="flex-1">
+                        <div className="flex items-baseline gap-2 mb-1">
+                          <span className="font-bold text-white text-base hover:underline cursor-pointer">Cosmo Base</span>
+                          <span className="bg-[#5865F2] text-white text-[10px] px-1.5 py-0.5 rounded font-bold">BOT</span>
+                          <span className="text-[#949ba4] text-xs">今日 {postAt ? postAt.split("T")[1] : "未定"}</span>
                         </div>
-                      )}
+                        {renderDiscordPreview(discordContent)}
+                        {(existingImages.length > 0 || newImageFiles.length > 0) && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {existingImages.map((src, i) => (
+                              <img key={`prev-ext-${i}`} src={src} alt="preview" className="max-w-[150px] max-h-[150px] rounded-lg object-cover" />
+                            ))}
+                            {newImageFiles.map((file, i) => (
+                              <img key={`prev-new-${i}`} src={URL.createObjectURL(file)} alt="preview" className="max-w-[150px] max-h-[150px] rounded-lg object-cover" />
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {postToX && (
-              <div className="sticky top-12">
-                <h3 className="text-xl font-extrabold text-black mb-4 flex items-center gap-2 mt-8">
-                  👀 𝕏 (Twitter) プレビュー
-                </h3>
-                <div className="bg-white text-black p-6 rounded-xl shadow-xl border border-slate-200">
-                  <div className="flex gap-4">
-                    <div className="w-12 h-12 rounded-full border border-slate-200 shrink-0 overflow-hidden">
-                      <img src="/CB-mark.png" alt="x icon" className="w-full h-full object-cover p-1" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-baseline gap-1 mb-1">
-                        <span className="font-bold text-base hover:underline cursor-pointer">CosmoBase</span>
-                        <span className="text-slate-500 text-sm">@CosmoBase</span>
-                        <span className="text-slate-500 text-sm">· 1秒前</span>
+              {postToX && (
+                <div>
+                  <h3 className="text-xl font-extrabold text-black mb-4 flex items-center gap-2">
+                    👀 𝕏 (Twitter) プレビュー
+                  </h3>
+                  <div className="bg-white text-black p-6 rounded-xl shadow-xl border border-slate-200">
+                    <div className="flex gap-4">
+                      <div className="w-12 h-12 rounded-full border border-slate-200 shrink-0 overflow-hidden">
+                        <img src="/CB-mark.png" alt="x icon" className="w-full h-full object-cover p-1" />
                       </div>
-                      <div className="text-sm whitespace-pre-wrap">
-                        {xContent || <span className="text-slate-400 italic">入力した内容がここに表示されます...</span>}
-                      </div>
-                      {(existingImages.length > 0 || newImageFiles.length > 0) && (
-                        <div className="mt-3 grid grid-cols-2 gap-1 rounded-2xl overflow-hidden border border-slate-200">
-                          {existingImages.slice(0, 4).map((src, i) => (
-                            <img key={`prev-ext-x-${i}`} src={src} alt="preview" className="w-full h-full object-cover aspect-video" />
-                          ))}
-                          {newImageFiles.slice(0, 4 - existingImages.length).map((file, i) => (
-                            <img key={`prev-new-x-${i}`} src={URL.createObjectURL(file)} alt="preview" className="w-full h-full object-cover aspect-video" />
-                          ))}
+                      <div className="flex-1">
+                        <div className="flex items-baseline gap-1 mb-1">
+                          <span className="font-bold text-base hover:underline cursor-pointer">CosmoBase</span>
+                          <span className="text-slate-500 text-sm">@CosmoBase</span>
+                          <span className="text-slate-500 text-sm">· 1秒前</span>
                         </div>
-                      )}
+                        <div className="text-sm whitespace-pre-wrap">
+                          {xContent || <span className="text-slate-400 italic">入力した内容がここに表示されます...</span>}
+                        </div>
+                        {(existingImages.length > 0 || newImageFiles.length > 0) && (
+                          <div className="mt-3 grid grid-cols-2 gap-1 rounded-2xl overflow-hidden border border-slate-200">
+                            {existingImages.slice(0, 4).map((src, i) => (
+                              <img key={`prev-ext-x-${i}`} src={src} alt="preview" className="w-full h-full object-cover aspect-video" />
+                            ))}
+                            {newImageFiles.slice(0, 4 - existingImages.length).map((file, i) => (
+                              <img key={`prev-new-x-${i}`} src={URL.createObjectURL(file)} alt="preview" className="w-full h-full object-cover aspect-video" />
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
-            
+              )}
+              
+            </div>
           </div>
         </div>
       </div>

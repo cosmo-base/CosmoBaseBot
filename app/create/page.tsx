@@ -17,10 +17,10 @@ export default function CreatePost() {
   const [discordChannelId, setDiscordChannelId] = useState("");
   const [discordContent, setDiscordContent] = useState("");
   const [xContent, setXContent] = useState("");
-  
+
   const [postAt, setPostAt] = useState("");
   const [imageFiles, setImageFiles] = useState<File[]>([]);
-  
+
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrencePattern, setRecurrencePattern] = useState("daily");
 
@@ -45,20 +45,20 @@ export default function CreatePost() {
   const isFormValid = (isDraft: boolean) => {
     // どちらにもチェックが入っていない場合は無効
     if (!postToDiscord && !postToX) return false;
-    
+
     // Discordに送る場合はチャンネルが必須
     if (postToDiscord && !discordChannelId) return false;
-    
+
     // どちらの本文も画像もない場合は無効
     if (!discordContent && !xContent && imageFiles.length === 0) return false;
-    
+
     // 🌟 下書きじゃない（本番登録）の場合のみ、時間の入力と制限をチェックする！
     if (!isDraft) {
       if (!postAt) return false;
       const hour = parseInt(postAt.split("T")[1]?.split(":")[0] || "0", 10);
       if (hour < 7 || hour > 22) return false;
     }
-    
+
     return true;
   };
 
@@ -176,9 +176,9 @@ export default function CreatePost() {
         <div className="flex flex-wrap gap-6 mb-6 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
           <p className="w-full text-sm font-bold text-slate-500 mb-2">送信先プラットフォームを選択</p>
           <label className="flex items-center gap-3 cursor-pointer group">
-            <input 
-              type="checkbox" 
-              checked={postToDiscord} 
+            <input
+              type="checkbox"
+              checked={postToDiscord}
               onChange={(e) => setPostToDiscord(e.target.checked)}
               className="w-6 h-6 text-[#5865F2] rounded-md focus:ring-[#5865F2]"
             />
@@ -186,11 +186,11 @@ export default function CreatePost() {
               👾 Discord に投稿
             </span>
           </label>
-          
+
           <label className="flex items-center gap-3 cursor-pointer group">
-            <input 
-              type="checkbox" 
-              checked={postToX} 
+            <input
+              type="checkbox"
+              checked={postToX}
               onChange={(e) => setPostToX(e.target.checked)}
               className="w-6 h-6 text-black rounded-md focus:ring-black"
             />
@@ -203,7 +203,7 @@ export default function CreatePost() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* 左側：入力フォーム */}
           <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 space-y-8">
-            
+
             {/* 🌟 Discordにチェックが入っている時だけ表示 */}
             {postToDiscord && (
               <section className="bg-indigo-50/50 p-6 rounded-xl border border-indigo-100">
@@ -262,7 +262,7 @@ export default function CreatePost() {
                     onChange={(e) => setDiscordContent(e.target.value)}
                     placeholder="ここにメッセージを入力します。&#13;&#10;**太字**、__下線__、~~取消線~~、||ネタバレ||、[リンク](URL)、> 引用、```コード``` などが使えます！"
                   />
-                  
+
                   {discordContent && (
                     <div className="mt-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
                       <label className="block text-slate-700 font-bold mb-2 text-sm">📝 この文章を新しいテンプレートとして保存</label>
@@ -285,7 +285,7 @@ export default function CreatePost() {
                   <span className="bg-slate-200 text-slate-800 w-6 h-6 rounded-full flex items-center justify-center text-sm">𝕏</span>
                   𝕏 (Twitter) 送信設定
                 </h2>
-                
+
                 <div>
                   <label className="block text-slate-800 font-bold mb-2 text-sm">ポスト内容</label>
                   <textarea
@@ -322,14 +322,14 @@ export default function CreatePost() {
                 投稿日時と繰り返し <span className="text-red-500">*</span>
               </h2>
               <div className="flex flex-col gap-2 max-w-md mb-4">
-                <input 
-                  type="datetime-local" 
-                  value={postAt} 
-                  onChange={(e) => setPostAt(e.target.value)} 
-                  className="w-full p-4 border border-slate-300 rounded-xl font-bold text-slate-800 bg-white focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer" 
+                <input
+                  type="datetime-local"
+                  value={postAt}
+                  onChange={(e) => setPostAt(e.target.value)}
+                  className="w-full p-4 border border-slate-300 rounded-xl font-bold text-slate-800 bg-white focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
                 />
                 <p className="text-slate-400 text-xs font-bold ml-1">※下書き保存の場合は未入力でもOKです</p>
-                
+
                 {postAt && (parseInt(postAt.split("T")[1]?.split(":")[0] || "0", 10) < 7 || parseInt(postAt.split("T")[1]?.split(":")[0] || "0", 10) > 22) && (
                   <p className="text-red-500 text-sm font-bold mt-1">※ 投稿時間は 7:00 〜 22:00 の間で指定してください</p>
                 )}
@@ -371,74 +371,74 @@ export default function CreatePost() {
             </div>
           </div>
 
-          {/* 右側：プレビューエリア（両方チェックしたら両方縦に並ぶ！） */}
-          <div className="hidden lg:block space-y-8">
-            
-            {postToDiscord && (
-              <div className="sticky top-12">
-                <h3 className="text-xl font-extrabold text-[#5865F2] mb-4 flex items-center gap-2">
-                  👀 Discord プレビュー
-                </h3>
-                <div className="bg-[#313338] text-gray-100 p-6 rounded-xl shadow-xl border border-[#1e1f22]">
-                  <div className="flex gap-4">
-                    {/* 🌟 プレビューのアイコンもCB-mark.pngに！ */}
-                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 overflow-hidden">
-                      <img src="/CB-mark.png" alt="bot icon" className="w-full h-full object-cover p-0.5" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-baseline gap-2 mb-1">
-                        <span className="font-bold text-white text-base hover:underline cursor-pointer">Cosmo Base</span>
-                        <span className="bg-[#5865F2] text-white text-[10px] px-1.5 py-0.5 rounded font-bold">BOT</span>
-                        <span className="text-[#949ba4] text-xs">今日 {postAt ? postAt.split("T")[1] : "未定"}</span>
+{/* 右側：プレビューエリア（両方チェックしたら両方縦に並ぶ！） */}
+          <div className="hidden lg:block">
+            {/* 🌟 外側の箱を固定し、はみ出た場合はこの中でスクロールできるようにしました！ */}
+            <div className="sticky top-12 space-y-8 max-h-[calc(100vh-6rem)] overflow-y-auto pb-10 pr-4">
+              
+              {postToDiscord && (
+                <div>
+                  <h3 className="text-xl font-extrabold text-[#5865F2] mb-4 flex items-center gap-2">
+                    👀 Discord プレビュー
+                  </h3>
+                  <div className="bg-[#313338] text-gray-100 p-6 rounded-xl shadow-xl border border-[#1e1f22]">
+                    <div className="flex gap-4">
+                      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 overflow-hidden">
+                        <img src="/CB-mark.png" alt="bot icon" className="w-full h-full object-cover p-0.5" />
                       </div>
-                      {renderDiscordPreview(discordContent)}
-                      {imageFiles.length > 0 && (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {imageFiles.map((file, i) => (
-                            <img key={i} src={URL.createObjectURL(file)} alt="preview" className="max-w-[200px] max-h-[200px] rounded-lg object-cover cursor-pointer" />
-                          ))}
+                      <div className="flex-1">
+                        <div className="flex items-baseline gap-2 mb-1">
+                          <span className="font-bold text-white text-base hover:underline cursor-pointer">Cosmo Base</span>
+                          <span className="bg-[#5865F2] text-white text-[10px] px-1.5 py-0.5 rounded font-bold">BOT</span>
+                          <span className="text-[#949ba4] text-xs">今日 {postAt ? postAt.split("T")[1] : "未定"}</span>
                         </div>
-                      )}
+                        {renderDiscordPreview(discordContent)}
+                        {imageFiles.length > 0 && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {imageFiles.map((file, i) => (
+                              <img key={`prev-new-${i}`} src={URL.createObjectURL(file)} alt="preview" className="max-w-[150px] max-h-[150px] rounded-lg object-cover" />
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {postToX && (
-              <div className="sticky top-12">
-                <h3 className="text-xl font-extrabold text-black mb-4 flex items-center gap-2 mt-8">
-                  👀 𝕏 (Twitter) プレビュー
-                </h3>
-                <div className="bg-white text-black p-6 rounded-xl shadow-xl border border-slate-200">
-                  <div className="flex gap-4">
-                    {/* 🌟 XのアイコンもCB-mark.pngに！ */}
-                    <div className="w-12 h-12 rounded-full border border-slate-200 shrink-0 overflow-hidden">
-                      <img src="/CB-mark.png" alt="x icon" className="w-full h-full object-cover p-1" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-baseline gap-1 mb-1">
-                        {/* 🌟 アカウント名をCosmoBaseに変更！ */}
-                        <span className="font-bold text-base hover:underline cursor-pointer">CosmoBase</span>
-                        <span className="text-slate-500 text-sm">@CosmoBase</span>
-                        <span className="text-slate-500 text-sm">· 1秒前</span>
+              {postToX && (
+                <div>
+                  <h3 className="text-xl font-extrabold text-black mb-4 flex items-center gap-2">
+                    👀 𝕏 (Twitter) プレビュー
+                  </h3>
+                  <div className="bg-white text-black p-6 rounded-xl shadow-xl border border-slate-200">
+                    <div className="flex gap-4">
+                      <div className="w-12 h-12 rounded-full border border-slate-200 shrink-0 overflow-hidden">
+                        <img src="/CB-mark.png" alt="x icon" className="w-full h-full object-cover p-1" />
                       </div>
-                      <div className="text-sm whitespace-pre-wrap">
-                        {xContent || <span className="text-slate-400 italic">入力した内容がここに表示されます...</span>}
-                      </div>
-                      {imageFiles.length > 0 && (
-                        <div className="mt-3 grid grid-cols-2 gap-1 rounded-2xl overflow-hidden border border-slate-200">
-                          {imageFiles.slice(0, 4).map((file, i) => (
-                            <img key={i} src={URL.createObjectURL(file)} alt="preview" className="w-full h-full object-cover aspect-video" />
-                          ))}
+                      <div className="flex-1">
+                        <div className="flex items-baseline gap-1 mb-1">
+                          <span className="font-bold text-base hover:underline cursor-pointer">CosmoBase</span>
+                          <span className="text-slate-500 text-sm">@CosmoBase</span>
+                          <span className="text-slate-500 text-sm">· 1秒前</span>
                         </div>
-                      )}
+                        <div className="text-sm whitespace-pre-wrap">
+                          {xContent || <span className="text-slate-400 italic">入力した内容がここに表示されます...</span>}
+                        </div>
+                        {imageFiles.length > 0 && (
+                          <div className="mt-3 grid grid-cols-2 gap-1 rounded-2xl overflow-hidden border border-slate-200">
+                            {imageFiles.slice(0, 4).map((file, i) => (
+                              <img key={`prev-new-x-${i}`} src={URL.createObjectURL(file)} alt="preview" className="w-full h-full object-cover aspect-video" />
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
-            
+              )}
+              
+            </div>
           </div>
         </div>
       </div>
