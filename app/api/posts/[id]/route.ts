@@ -25,7 +25,7 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
         discord_content: data.discordContent,
         x_content: data.xContent,
         
-        // 🌟 時間が空っぽなら null を保存
+        // フロントエンドでUTCに変換されたものを素直に保存
         post_at: data.postAt ? new Date(data.postAt) : null,
         
         isDraft: data.isDraft !== undefined ? data.isDraft : false,

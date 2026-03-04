@@ -12,7 +12,7 @@ export async function POST(request: Request) {
         discord_content: data.discordContent || "",
         x_content: data.xContent || "",
         
-        // 🌟 時間が空っぽなら null を保存
+        // フロントエンドでUTCに変換されたものを素直に保存
         post_at: data.postAt ? new Date(data.postAt) : null,
 
         is_recurring: data.isRecurring || false,

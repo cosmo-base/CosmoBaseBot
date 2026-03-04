@@ -102,10 +102,20 @@ export default async function Dashboard() {
                     {post.post_at ? (
                       <>
                         <div className="text-sm text-slate-500 font-bold mb-1">
-                          {post.post_at.toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo", month: "short", day: "numeric" })}
+                          {/*サーバー（Vercel）環境でも確実に日本時間で表示させる最強の書き方 */}
+                          {new Intl.DateTimeFormat('ja-JP', {
+                            timeZone: 'Asia/Tokyo',
+                            month: 'short',
+                            day: 'numeric'
+                          }).format(new Date(post.post_at))}
                         </div>
                         <div className="text-xl font-extrabold text-slate-800">
-                          {post.post_at.toLocaleTimeString("ja-JP", { timeZone: "Asia/Tokyo", hour: "2-digit", minute: "2-digit" })}
+                          {new Intl.DateTimeFormat('ja-JP', {
+                            timeZone: 'Asia/Tokyo',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false // 24時間表記に固定
+                          }).format(new Date(post.post_at))}
                         </div>
                       </>
                     ) : (
